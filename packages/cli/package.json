@@ -1,0 +1,16 @@
+{
+  "name": "@flow/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The `flow` command — a drop-in replacement for flow.sh backed by the event-sourced runtime.",
+  "bin": {
+    "flow": "dist/cli.js"
+  },
+  "dependencies": {
+    "@flow/core": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,40 @@
+name: flow-harness
+
+services:
+  # Run the full suite in a clean, freshly built image.
+  #   docker compose run --rm test
+  test:
+    build:
+      context: .
+      target: test
+    image: flow-harness-test
+
+  # The `flow` CLI. Run state persists in the named volume mounted at /work.
+  #   docker compose run --rm flow init demo "build a small API"
+  #   docker compose run --rm flow add api backend sonnet
+  #   docker compose run --rm flow panel
+  flow:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    volumes:
+      - flow-state:/work
+
+  # Iterate on the source with the suite in watch mode. Source is mounted; deps stay in the
+  # image. Rebuilds and re-runs on change.
+  #   docker compose up dev
+  dev:
+    build:
+      context: .
+      target: build
+    image: flow-harness-build
+    volumes:
+      - ./packages:/app/packages
+      - ./tsconfig.base.json:/app/tsconfig.base.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./vitest.config.ts:/app/vitest.config.ts
+    command: npm run test:watch
+
+volumes:
+  flow-state:

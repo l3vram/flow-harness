@@ -1,0 +1,14 @@
+# Keep the host's platform-specific installs and build output out of the image context —
+# everything is (re)installed and (re)built inside the container for the right platform.
+node_modules
+**/node_modules
+dist
+**/dist
+*.tsbuildinfo
+**/*.tsbuildinfo
+.flow
+.git
+.gitignore
+coverage
+*.log
+.DS_Store
