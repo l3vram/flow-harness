@@ -1,0 +1,19 @@
+{
+  "name": "@flow/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Model Context Protocol server exposing the flow runtime as flow_* tools, so any MCP host can drive a run.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-mcp": "dist/stdio.js"
+  },
+  "dependencies": {
+    "@flow/core": "*",
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

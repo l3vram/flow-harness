@@ -30,19 +30,27 @@ The resumable spine everything else hangs from. **No LLM anywhere in it.**
 Acceptance met: CLI parity · rebuild state from the log after deleting the cache · breaker at
 3 attempts · cycle → exit 2 with culprits · zero LLM in the core.
 
-Decisions: see [`docs/decisions`](docs/decisions) (ADRs 0001–0005).
+### v0.4 — MCP server ✅
+Expose the runtime as MCP `flow_*` tools so **any** MCP host can drive a run — the point at
+which it stops being "a skill you invoke each time."
+
+- ✅ **`@flow/mcp-server`** — 10 tools: `flow_start`, `flow_add_task`, `flow_plan`,
+  `flow_ready`, `flow_set`, `flow_advance`, `flow_gate`, `flow_budget`, `flow_status`,
+  `flow_report`. Runs isolated under `<FLOW_HOME>/runs/<runId>/`.
+- ✅ stdio transport (bin `flow-mcp`); compose service `mcp`.
+- ✅ **8 tests**: tool handlers, an in-memory client↔server round trip, plus a real stdio
+  smoke test of the container speaking the protocol. **24 tests green total.**
+
+Local transport is stdio; a network (HTTP) transport and a real `docker compose up` daemon
+arrive with remote deployment.
+
+Decisions: see [`docs/decisions`](docs/decisions) (ADRs 0001–0006).
 
 ---
 
 ## What remains (in priority order)
 
-### v0.4 — MCP server 🚧 (next)
-Expose the runtime as MCP `flow_*` tools so **any** MCP host can drive it — the point at which
-it stops being "a skill you invoke each time." Local transport is stdio; a real network daemon
-(and `docker compose up`) arrives with remote deployment. Testable via the SDK's in-memory
-transport (server + client), no processes required.
-
-### v0.2 — provider abstraction + model router ⬜
+### v0.2 — provider abstraction + model router ⬜ (next)
 One LLM provider adapter (Anthropic) behind an `LLMProvider` interface, plus a model router.
 The first place a model is invoked. Provider-agnosticism is deliberately deferred — one
 adapter now, more later, all behind the interface.

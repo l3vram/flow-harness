@@ -21,6 +21,22 @@ services:
     volumes:
       - flow-state:/work
 
+  # The MCP server over stdio. An MCP host launches it and speaks the protocol on stdio:
+  #   docker compose run -i --rm mcp
+  # Runs live under /work/.flow/runs/<runId> on the shared volume. A network (HTTP) transport
+  # and a real `docker compose up` daemon arrive with remote deployment.
+  mcp:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/mcp-server/dist/stdio.js"]
+    environment:
+      FLOW_HOME: /work/.flow
+    volumes:
+      - flow-state:/work
+    stdin_open: true
+
   # Iterate on the source with the suite in watch mode. Source is mounted; deps stay in the
   # image. Rebuilds and re-runs on change.
   #   docker compose up dev
