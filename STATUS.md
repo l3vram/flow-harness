@@ -30,6 +30,22 @@ The resumable spine everything else hangs from. **No LLM anywhere in it.**
 Acceptance met: CLI parity · rebuild state from the log after deleting the cache · breaker at
 3 attempts · cycle → exit 2 with culprits · zero LLM in the core.
 
+### v0.2 — provider abstraction + model router ✅
+A provider-neutral inference layer so the harness can call **any** inference backend, with
+**no vendor SDK dependency** and **fully testable with zero API keys**.
+
+- ✅ **`@flow/llm`** — `LLMProvider` interface, `FakeProvider` (deterministic offline echo) and
+  `OpenAICompatibleProvider` (any `/chat/completions` backend — OpenAI, OpenRouter, Groq,
+  Together, vLLM, LM Studio, Ollama `/v1`, …) over the global `fetch`. No external runtime
+  dependencies.
+- ✅ **`ModelRouter`** — resolves a `Tier` (`haiku`/`sonnet`/`opus`/custom) to a provider +
+  model; `routerFromEnv()` builds one from `FLOW_LLM_*` env vars, defaulting to the fake
+  provider.
+- ✅ bin `flow-llm`; compose service `llm` (`docker compose run --rm llm "<prompt>"`).
+- ✅ **17 new tests** (fake provider, openai-compatible over an injected fetch, router
+  resolution, and `routerFromEnv` incl. treating empty-string env vars as unset). **41 tests
+  green total.**
+
 ### v0.4 — MCP server ✅
 Expose the runtime as MCP `flow_*` tools so **any** MCP host can drive a run — the point at
 which it stops being "a skill you invoke each time."
@@ -50,12 +66,7 @@ Decisions: see [`docs/decisions`](docs/decisions) (ADRs 0001–0006).
 
 ## What remains (in priority order)
 
-### v0.2 — provider abstraction + model router ⬜ (next)
-One LLM provider adapter (Anthropic) behind an `LLMProvider` interface, plus a model router.
-The first place a model is invoked. Provider-agnosticism is deliberately deferred — one
-adapter now, more later, all behind the interface.
-
-### v0.3 — executive ("CEO") loop ⬜
+### v0.3 — executive ("CEO") loop ⬜ (next)
 A thin observe→decide→plan→delegate→evaluate loop that reads/writes the event log, with human
 gates on by default. Cannot edit product code directly.
 

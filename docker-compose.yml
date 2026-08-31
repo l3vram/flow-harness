@@ -37,6 +37,22 @@ services:
       - flow-state:/work
     stdin_open: true
 
+  # The `flow-llm` CLI — a provider-neutral one-shot completion, offline by default.
+  #   docker compose run --rm llm "summarize this repo"
+  #   docker compose run --rm -e FLOW_LLM_PROVIDER=openai -e FLOW_LLM_BASE_URL=... llm "..."
+  llm:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/llm/dist/cli.js"]
+    environment:
+      FLOW_LLM_PROVIDER: ${FLOW_LLM_PROVIDER:-fake}
+      FLOW_LLM_BASE_URL: ${FLOW_LLM_BASE_URL:-}
+      FLOW_LLM_API_KEY: ${FLOW_LLM_API_KEY:-}
+      FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
+      FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
+
   # Iterate on the source with the suite in watch mode. Source is mounted; deps stay in the
   # image. Rebuilds and re-runs on change.
   #   docker compose up dev

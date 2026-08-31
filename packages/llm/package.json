@@ -1,0 +1,15 @@
+{
+  "name": "@flow/llm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Provider-neutral inference layer for the flow harness — any backend behind LLMProvider, zero vendor SDK, fully testable offline.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-llm": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ]
+}
