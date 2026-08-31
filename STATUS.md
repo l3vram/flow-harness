@@ -50,9 +50,12 @@ A provider-neutral inference layer so the harness can call **any** inference bac
 Expose the runtime as MCP `flow_*` tools so **any** MCP host can drive a run — the point at
 which it stops being "a skill you invoke each time."
 
-- ✅ **`@flow/mcp-server`** — 10 tools: `flow_start`, `flow_add_task`, `flow_plan`,
+- ✅ **`@flow/mcp-server`** — 11 tools: `flow_start`, `flow_add_task`, `flow_plan`,
   `flow_ready`, `flow_set`, `flow_advance`, `flow_gate`, `flow_budget`, `flow_status`,
-  `flow_report`. Runs isolated under `<FLOW_HOME>/runs/<runId>/`.
+  `flow_report`, and **`flow_execute`** (v0.4.1 — runs a task through the executor over MCP:
+  the model writes files, verify runs, the task is set green/blocked). Runs isolated under
+  `<FLOW_HOME>/runs/<runId>/`. Proven over the real protocol: a feature was built end-to-end
+  via MCP (`flow_start → flow_add_task → flow_execute` with Groq).
 - ✅ stdio transport (bin `flow-mcp`); compose service `mcp`.
 - ✅ **8 tests**: tool handlers, an in-memory client↔server round trip, plus a real stdio
   smoke test of the container speaking the protocol. **24 tests green total.**
