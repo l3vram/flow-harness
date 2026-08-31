@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Runtime } from "@flow/core";
+import { Runtime, type GateId } from "@flow/core";
 import { Ceo } from "@flow/ceo";
 import { Executor } from "@flow/executor";
 import { routerFromEnv } from "@flow/llm";
@@ -39,6 +39,11 @@ async function main(): Promise<void> {
   for (const spec of config.tasks) {
     runtime.addTask(spec.id, spec.role, spec.tier, spec.deps ?? []);
     specs.set(spec.id, spec);
+  }
+
+  // The human approves the plan (and optionally the final gate) up front by listing gates here.
+  for (const gate of config.approveGates ?? []) {
+    runtime.recordGate(gate as GateId, "approved");
   }
 
   const router = routerFromEnv();

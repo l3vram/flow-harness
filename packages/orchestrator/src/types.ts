@@ -43,5 +43,7 @@ export interface RunConfig {
   verifyCommand?: string[];
   contextRoot?: string;
   maxSteps?: number;
+  /** Human gates to pre-approve before the loop starts (e.g. ["A"] = the plan is approved). */
+  approveGates?: string[];
   tasks: TaskSpec[];
 }
