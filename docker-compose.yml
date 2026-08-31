@@ -53,6 +53,25 @@ services:
       FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
       FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
 
+  # The `flow-ceo` CLI — the thin executive loop, one run per invocation.
+  #   docker compose run --rm ceo <runId>
+  ceo:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/ceo/dist/cli.js"]
+    environment:
+      FLOW_HOME: /work/.flow
+      FLOW_LLM_PROVIDER: ${FLOW_LLM_PROVIDER:-fake}
+      FLOW_LLM_BASE_URL: ${FLOW_LLM_BASE_URL:-}
+      FLOW_LLM_API_KEY: ${FLOW_LLM_API_KEY:-}
+      FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
+      FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
+      FLOW_CEO_AUTO_APPLY: ${FLOW_CEO_AUTO_APPLY:-}
+    volumes:
+      - flow-state:/work
+
   # Iterate on the source with the suite in watch mode. Source is mounted; deps stay in the
   # image. Rebuilds and re-runs on change.
   #   docker compose up dev

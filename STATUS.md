@@ -62,15 +62,25 @@ arrive with remote deployment.
 
 Decisions: see [`docs/decisions`](docs/decisions) (ADRs 0001–0006).
 
+### v0.3 — executive ("CEO") loop ✅
+A deliberately *thin* executive: observes a run's state and asks the LLM for the single next
+move as structured JSON, then applies only DAG-safe actions.
+
+- ✅ **`@flow/ceo`** — four actions (`dispatch`, `advance`, `await_human`, `complete`); the CEO
+  **never writes or edits code**, never mutates state except through `@flow/core`'s typed
+  methods, and only ever auto-applies `advance` when the current wave is actually done —
+  everything else (including every `dispatch`) is handed back to the caller/human. Model-reported
+  `confidence` is recorded for humans only, never used to gate anything automatically.
+  Fully testable offline with the `FakeProvider`.
+- ✅ bin `flow-ceo`; compose service `ceo` (`docker compose run --rm ceo <runId>`).
+- ✅ **14 new tests** (decision parsing incl. embedded-prose and confidence clamping, `decide`/
+  `step`/`run` against a scripted `FakeProvider`). **55 tests green total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.3 — executive ("CEO") loop ⬜ (next)
-A thin observe→decide→plan→delegate→evaluate loop that reads/writes the event log, with human
-gates on by default. Cannot edit product code directly.
-
-### v0.5+ — the rest of the plan ⬜
+### v0.5+ — the rest of the plan ⬜ (next)
 Context engine · layered memory · research · QA engine + Playwright evidence · risk/review ·
 repair/replan · evaluation harness · controlled learning/policy promotion · MCP resources &
 apps · remote deployment. Each becomes its own package on top of the spine. Details per

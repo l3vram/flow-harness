@@ -1,0 +1,19 @@
+{
+  "name": "@flow/ceo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The thin executive (CEO) loop: observes a run's state and decides the single next move.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-ceo": "dist/cli.js"
+  },
+  "dependencies": {
+    "@flow/core": "*",
+    "@flow/llm": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}
