@@ -28,7 +28,7 @@ export function createServer(ctx: ToolContext): Server {
       return { content: [{ type: "text", text: `unknown tool: ${request.params.name}` }], isError: true };
     }
     try {
-      const result = tool.handler(ctx, request.params.arguments ?? {});
+      const result = await tool.handler(ctx, request.params.arguments ?? {});
       return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
       return { content: [{ type: "text", text: (error as Error).message }], isError: true };

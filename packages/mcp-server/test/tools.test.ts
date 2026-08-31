@@ -1,7 +1,8 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FakeProvider, ModelRouter } from "@flow/llm";
 import { getTool, type ToolContext } from "../src/index.js";
 
 describe("mcp tool handlers", () => {
@@ -48,5 +49,57 @@ describe("mcp tool handlers", () => {
 
   it("rejects acting on an unknown run", () => {
     expect(() => call("flow_ready", { runId: "ghost" })).toThrow(/run not found/);
+  });
+
+  describe("flow_execute", () => {
+    let targetDir: string;
+    let router: ModelRouter;
+
+    beforeEach(() => {
+      targetDir = mkdtempSync(join(tmpdir(), "flow-mcp-target-"));
+      const provider = new FakeProvider({ responder: () => "<<<FILE out.txt>>>\nhi\n<<<END>>>\n<<<REASON>>> ok" });
+      router = new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "sonnet", provider: provider.name, model: "m" }], "sonnet");
+      ctx = { baseDir: ctx.baseDir, router };
+    });
+    afterEach(() => {
+      rmSync(targetDir, { recursive: true, force: true });
+    });
+
+    it("executes a task and sets it green", async () => {
+      call("flow_start", { runId: "exec1", objective: "o" });
+      call("flow_add_task", { runId: "exec1", id: "t", role: "backend", tier: "sonnet" });
+
+      const result = (await getTool("flow_execute").handler(ctx, {
+        runId: "exec1",
+        taskId: "t",
+        instruction: "make out.txt",
+        targetDir,
+      })) as { status: string; files: string[]; verify: { ran: boolean; ok: boolean } };
+
+      expect(result.status).toBe("green");
+      expect(result.files).toEqual(["out.txt"]);
+      expect(result.verify).toEqual({ ran: false, ok: true, output: "" });
+      expect(existsSync(join(targetDir, "out.txt"))).toBe(true);
+      expect(readFileSync(join(targetDir, "out.txt"), "utf8")).toBe("hi");
+
+      const status = call("flow_status", { runId: "exec1" }) as { plans: Array<{ id: string; status: string }> };
+      expect(status.plans.find((p) => p.id === "t")?.status).toBe("green");
+    });
+
+    it("blocks the task when verify fails", async () => {
+      call("flow_start", { runId: "exec2", objective: "o" });
+      call("flow_add_task", { runId: "exec2", id: "t", role: "backend", tier: "sonnet" });
+
+      const result = (await getTool("flow_execute").handler(ctx, {
+        runId: "exec2",
+        taskId: "t",
+        instruction: "make out.txt",
+        targetDir,
+        verifyCommand: ["node", "-e", "process.exit(1)"],
+      })) as { status: string; verify: { ok: boolean } };
+
+      expect(result.status).toBe("blocked");
+      expect(result.verify.ok).toBe(false);
+    });
   });
 });

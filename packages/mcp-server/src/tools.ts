@@ -1,5 +1,7 @@
 import { join } from "node:path";
 import { Runtime, isStatus, type GateId, type Tier } from "@flow/core";
+import { Executor } from "@flow/executor";
+import { routerFromEnv, type ModelRouter } from "@flow/llm";
 
 // The tool layer. Each tool is a plain object with a JSON-Schema input and a pure-ish handler
 // that operates on a Runtime. Keeping the handlers here (independent of the MCP SDK) makes them
@@ -8,6 +10,8 @@ import { Runtime, isStatus, type GateId, type Tier } from "@flow/core";
 export interface ToolContext {
   /** Base directory under which runs live at `<baseDir>/runs/<runId>/`. */
   baseDir: string;
+  /** Injected router (for tests); production falls back to `routerFromEnv()` at call time. */
+  router?: ModelRouter;
 }
 
 export interface JsonSchema {
@@ -23,7 +27,7 @@ export interface ToolDef {
   name: string;
   description: string;
   inputSchema: JsonSchema;
-  handler: (ctx: ToolContext, args: Args) => unknown;
+  handler: (ctx: ToolContext, args: Args) => unknown | Promise<unknown>;
 }
 
 // --- tiny, strict argument extractors (validation + typing in one) ---
@@ -40,6 +44,12 @@ function optStr(args: Args, key: string): string | undefined {
   return v;
 }
 function strArray(args: Args, key: string): string[] {
+  const v = args[key];
+  if (v === undefined || v === null) return [];
+  if (!Array.isArray(v) || v.some((x) => typeof x !== "string")) throw new Error(`'${key}' must be an array of strings`);
+  return v as string[];
+}
+function optStrArray(args: Args, key: string): string[] {
   const v = args[key];
   if (v === undefined || v === null) return [];
   if (!Array.isArray(v) || v.some((x) => typeof x !== "string")) throw new Error(`'${key}' must be an array of strings`);
@@ -194,6 +204,41 @@ export const tools: ToolDef[] = [
     handler: (ctx, args) => {
       const s = open(ctx, args).state;
       return { run: s.run, budget: s.budget };
+    },
+  },
+  {
+    name: "flow_execute",
+    description:
+      "Run one task through the executor: the model writes the files, they are applied under targetDir only, " +
+      "the configured verify command runs, and the task is set green (verify ok) or blocked. " +
+      "Requires a real LLM backend via FLOW_LLM_* env.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...runId,
+        taskId: { type: "string" },
+        instruction: { type: "string" },
+        targetDir: { type: "string" },
+        verifyCommand: { type: "array", items: { type: "string" } },
+        tier: { type: "string" },
+      },
+      required: ["runId", "taskId", "instruction", "targetDir"],
+      additionalProperties: false,
+    },
+    handler: async (ctx, args) => {
+      const rt = open(ctx, args);
+      const taskId = reqStr(args, "taskId");
+      const instruction = reqStr(args, "instruction");
+      const targetDir = reqStr(args, "targetDir");
+      const verifyCommand = optStrArray(args, "verifyCommand");
+      const tier = optStr(args, "tier");
+      const router = ctx.router ?? routerFromEnv();
+      const executor = new Executor(router, { verifyCommand, tier });
+      rt.setStatus(taskId, "running");
+      const result = await executor.run({ id: taskId, instruction }, { targetDir });
+      const ok = result.verify.ok;
+      rt.setStatus(taskId, ok ? "green" : "blocked", ok ? "" : "verify failed");
+      return { taskId, status: ok ? "green" : "blocked", files: result.files, verify: result.verify, reason: result.reason };
     },
   },
 ];

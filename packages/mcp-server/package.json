@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@flow/core": "*",
+    "@flow/executor": "*",
+    "@flow/llm": "*",
     "@modelcontextprotocol/sdk": "^1.12.0"
   },
   "files": [
