@@ -26,6 +26,7 @@ flowchart TB
   subgraph Brain["Judgment · LLM · expensive tier"]
     CEO["@flow/ceo — executive loop (v0.3)"]
     EXEC["@flow/executor — writes code + runs verify (v0.6)"]
+    ORCH["@flow/orchestrator — autonomous loop (v0.7)"]
   end
 
   subgraph Deterministic["Deterministic core · NO LLM"]
@@ -56,6 +57,9 @@ flowchart TB
   CEO --> EXEC
   EXEC --> LLM
   EXEC --> CTX
+  ORCH --> CEO
+  ORCH --> EXEC
+  ORCH --> CORE
   LLM --> FAKE
   LLM --> OAI
   CORE --> SCHED
@@ -134,6 +138,7 @@ stateDiagram-v2
 | `@flow/ceo` | Thin executive loop: observe state → decide next move via the LLM → gate/apply. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
 | `@flow/executor` | Turns a task + context into applied file changes in a target dir, then runs the verify command. The only writer of product code. | llm, context | ✅ v0.6 |
+| `@flow/orchestrator` | The conductor: drives CEO → executor → runtime (decide → write+verify → advance) for a full autonomous run. `flow-run <config.json>`. | core, ceo, executor, llm, context | ✅ v0.7 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)
@@ -170,12 +175,11 @@ criteria (build + tests in Docker), not by an agent's say-so.
 
 ## Where this is going
 
-With the `v0.6` executor in place, the harness can take an instruction, have a model write the
-files, apply them safely, and verify them — the "actually builds things" loop is closed (proven
-end-to-end against a real backend). The remaining seam is wiring the CEO's `dispatch` to the
-executor with the runtime's wave/verify loop. Then: layered memory · research · QA engine +
-Playwright evidence · risk/review · repair/replan · evaluation · controlled learning · MCP
-resources & apps · remote deployment. The end state: point the harness at its own repository and
+With `v0.7` the autonomous loop is closed: `flow-run` drives CEO → executor → runtime end to end
+(decide → write + verify → advance), proven against a real backend — including the CEO pausing at
+a pending human gate rather than auto-completing. Next, `v0.8+`: layered memory · research · QA
+engine + Playwright evidence · risk/review · repair/replan · evaluation · controlled learning ·
+MCP resources & apps · remote deployment. The end state: point the harness at its own repository and
 let it build its next increments — which only works because the spine beneath it is
 deterministic, resumable and auditable. Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real
 plan).
