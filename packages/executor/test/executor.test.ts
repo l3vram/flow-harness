@@ -24,10 +24,7 @@ describe("Executor", () => {
   });
 
   it("writes files and reports a passing verify", async () => {
-    const text = JSON.stringify({
-      files: [{ path: "hello.txt", content: "hi" }],
-      reason: "done",
-    });
+    const text = "<<<FILE hello.txt>>>\nhi\n<<<END>>>\n<<<REASON>>> done";
     const router = routerWithResponse(text);
     const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(0)"] });
 
@@ -44,10 +41,7 @@ describe("Executor", () => {
   });
 
   it("reports a failing verify", async () => {
-    const text = JSON.stringify({
-      files: [{ path: "hello.txt", content: "hi" }],
-      reason: "done",
-    });
+    const text = "<<<FILE hello.txt>>>\nhi\n<<<END>>>\n<<<REASON>>> done";
     const router = routerWithResponse(text);
     const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(1)"] });
 

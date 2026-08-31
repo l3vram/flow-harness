@@ -28,9 +28,11 @@ function ceoRouter(actions: string[]): ModelRouter {
   return new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "opus", provider: provider.name, model: "m" }], "opus");
 }
 
-/** A ModelRouter whose provider always returns the given file changes as executor JSON. */
+/** A ModelRouter whose provider always returns the given file changes as executor block text. */
 function execRouter(files: { path: string; content: string }[]): ModelRouter {
-  const text = JSON.stringify({ files, reason: "done" });
+  const text =
+    files.map((f) => "<<<FILE " + f.path + ">>>\n" + f.content + "\n<<<END>>>").join("\n") +
+    "\n<<<REASON>>> done";
   const provider = new FakeProvider({ responder: () => text });
   return new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "sonnet", provider: provider.name, model: "m" }], "sonnet");
 }

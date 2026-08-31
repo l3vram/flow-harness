@@ -2,65 +2,64 @@ import { describe, expect, it } from "vitest";
 import { isSafeRelativePath, parseChanges } from "../src/index.js";
 
 describe("parseChanges", () => {
-  it("parses a valid response", () => {
-    const text = JSON.stringify({
-      files: [{ path: "a.ts", content: "hello" }],
-      reason: "did it",
-    });
+  it("parses a single block into one FileChange with exact content", () => {
+    const text = "<<<FILE a.ts>>>\nhello\n<<<END>>>";
     const { files, reason } = parseChanges(text);
     expect(files).toEqual([{ path: "a.ts", content: "hello" }]);
+    expect(reason).toBe("");
+  });
+
+  it("parses two blocks where content spans multiple lines with braces, quotes and a blank line", () => {
+    const contentA = [
+      "function f() {",
+      '  const s = "hi \'there\'";',
+      "",
+      "  return s;",
+      "}",
+    ].join("\n");
+    const contentB = "just some text\nwith another line";
+    const text = [
+      "<<<FILE src/a.ts>>>",
+      contentA,
+      "<<<END>>>",
+      "<<<FILE src/b.txt>>>",
+      contentB,
+      "<<<END>>>",
+      "<<<REASON>>> wrote two files",
+    ].join("\n");
+
+    const { files, reason } = parseChanges(text);
+    expect(files).toEqual([
+      { path: "src/a.ts", content: contentA },
+      { path: "src/b.txt", content: contentB },
+    ]);
+    expect(reason).toBe("wrote two files");
+  });
+
+  it("extracts <<<REASON>>> ...", () => {
+    const text = "<<<FILE a.ts>>>\nx\n<<<END>>>\n<<<REASON>>> did it";
+    const { reason } = parseChanges(text);
     expect(reason).toBe("did it");
   });
 
-  it("parses JSON embedded in surrounding prose", () => {
-    const text = `Sure, here you go:\n${JSON.stringify({
-      files: [{ path: "a.ts", content: "hi" }],
-      reason: "ok",
-    })}\nHope that helps!`;
-    const { files } = parseChanges(text);
-    expect(files).toEqual([{ path: "a.ts", content: "hi" }]);
-  });
-
-  it("defaults reason to empty string when missing", () => {
-    const text = JSON.stringify({ files: [] });
+  it("defaults reason to empty string when absent", () => {
+    const text = "<<<FILE a.ts>>>\nx\n<<<END>>>";
     const { reason } = parseChanges(text);
     expect(reason).toBe("");
   });
 
-  it("throws on non-JSON text", () => {
-    expect(() => parseChanges("no braces here")).toThrow("executor returned no parseable JSON");
-  });
-
-  it("throws when files is missing", () => {
-    expect(() => parseChanges(JSON.stringify({ reason: "x" }))).toThrow(
-      "executor JSON missing files array",
-    );
-  });
-
-  it("throws when files is not an array", () => {
-    expect(() => parseChanges(JSON.stringify({ files: "nope" }))).toThrow(
-      "executor JSON missing files array",
-    );
-  });
-
-  it("throws when exceeding maxFiles", () => {
-    const files = [{ path: "a.ts", content: "x" }, { path: "b.ts", content: "y" }];
-    expect(() => parseChanges(JSON.stringify({ files }), 1)).toThrow("too many files (2 > 1)");
-  });
-
-  it("throws on a non-string path", () => {
-    const text = JSON.stringify({ files: [{ path: 5, content: "x" }] });
-    expect(() => parseChanges(text)).toThrow();
-  });
-
-  it("throws on a non-string content", () => {
-    const text = JSON.stringify({ files: [{ path: "a.ts", content: 5 }] });
-    expect(() => parseChanges(text)).toThrow();
+  it("throws no file blocks when the text has none", () => {
+    expect(() => parseChanges("no markers here")).toThrow("executor returned no file blocks");
   });
 
   it("throws on an unsafe path", () => {
-    const text = JSON.stringify({ files: [{ path: "../escape.txt", content: "x" }] });
-    expect(() => parseChanges(text)).toThrow("unsafe path: ../escape.txt");
+    const text = "<<<FILE ../evil.txt>>>\nx\n<<<END>>>";
+    expect(() => parseChanges(text)).toThrow("unsafe path: ../evil.txt");
+  });
+
+  it("throws when block count exceeds maxFiles", () => {
+    const text = "<<<FILE a.ts>>>\nx\n<<<END>>>\n<<<FILE b.ts>>>\ny\n<<<END>>>";
+    expect(() => parseChanges(text, 1)).toThrow("too many files (2 > 1)");
   });
 });
 

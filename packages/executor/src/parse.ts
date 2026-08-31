@@ -16,55 +16,71 @@ export function isSafeRelativePath(p: string): boolean {
   return true;
 }
 
+const FILE_START_RE = /^<<<FILE\s+(.+?)>>>\s*$/;
+const FILE_END_RE = /^<<<END>>>\s*$/;
+const REASON_RE = /^<<<REASON>>>\s?(.*)$/;
+
 /**
- * Parses the executor's raw model text into validated file changes. Robust to surrounding prose:
- * takes the substring from the first `{` to the last `}` and parses that, since models sometimes
- * wrap JSON in commentary despite being told not to.
+ * Parses the executor's raw model text into validated file changes. The model is instructed to
+ * emit one marker-delimited block per file (`<<<FILE path>>>` ... `<<<END>>>`), which needs no
+ * escaping of file content, followed by an optional `<<<REASON>>> ...` line. This avoids the
+ * fragility of asking the model to produce valid JSON containing arbitrary multi-line content.
  */
 export function parseChanges(
   text: string,
   maxFiles = 50,
 ): { files: FileChange[]; reason: string } {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  let raw: unknown;
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("executor returned no parseable JSON");
-  }
-  try {
-    raw = JSON.parse(text.slice(start, end + 1));
-  } catch {
-    throw new Error("executor returned no parseable JSON");
-  }
-
-  const obj = raw as Record<string, unknown>;
-
-  const rawFiles = obj.files;
-  if (!Array.isArray(rawFiles)) {
-    throw new Error("executor JSON missing files array");
-  }
-  if (rawFiles.length > maxFiles) {
-    throw new Error(`too many files (${rawFiles.length} > ${maxFiles})`);
-  }
-
+  const lines = text.split("\n");
   const files: FileChange[] = [];
-  for (const entry of rawFiles) {
-    const item = entry as Record<string, unknown>;
-    const path = item.path;
-    const content = item.content;
-    if (typeof path !== "string" || path === "") {
-      throw new Error(`invalid file entry: path must be a non-empty string`);
+  let reason = "";
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+    const startMatch = FILE_START_RE.exec(line);
+    if (startMatch) {
+      const path = (startMatch[1] ?? "").trim();
+      const contentLines: string[] = [];
+      let j = i + 1;
+      let closed = false;
+      while (j < lines.length) {
+        const candidate = lines[j] ?? "";
+        if (FILE_END_RE.test(candidate)) {
+          closed = true;
+          break;
+        }
+        contentLines.push(candidate);
+        j++;
+      }
+      if (closed) {
+        files.push({ path, content: contentLines.join("\n") });
+        i = j + 1;
+        continue;
+      } else {
+        // Unterminated block at end of input: ignore this trailing partial block.
+        break;
+      }
     }
-    if (typeof content !== "string") {
-      throw new Error(`invalid file entry: content must be a string (path: ${path})`);
+
+    const reasonMatch = REASON_RE.exec(line);
+    if (reasonMatch) {
+      reason = (reasonMatch[1] ?? "").trim();
     }
-    if (!isSafeRelativePath(path)) {
-      throw new Error(`unsafe path: ${path}`);
-    }
-    files.push({ path, content });
+
+    i++;
   }
 
-  const reason = typeof obj.reason === "string" ? obj.reason : "";
+  if (files.length === 0) {
+    throw new Error("executor returned no file blocks");
+  }
+  if (files.length > maxFiles) {
+    throw new Error(`too many files (${files.length} > ${maxFiles})`);
+  }
+  for (const file of files) {
+    if (!isSafeRelativePath(file.path)) {
+      throw new Error(`unsafe path: ${file.path}`);
+    }
+  }
 
   return { files, reason };
 }
