@@ -28,7 +28,8 @@ be **deterministic, resumable and auditable**. That is exactly what `v0.1` deliv
 - **`@flow/mcp-server`** — an MCP server exposing the runtime as `flow_*` tools, so any MCP
   host can drive a run (stdio transport; bin `flow-mcp`, compose service `mcp`).
 
-See [`docs/decisions`](docs/decisions) for the architecture decisions, and
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the conceptual map (how it all fits together, with
+diagrams), [`docs/decisions`](docs/decisions) for the architecture decisions, and
 [`STATUS.md`](STATUS.md) for what exists and what remains.
 
 ## Quickstart (Docker — the primary workflow)
