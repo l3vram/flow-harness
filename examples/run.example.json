@@ -1,0 +1,22 @@
+{
+  "runId": "demo",
+  "objective": "build a tiny hello-world node script",
+  "targetDir": "/work/out",
+  "verifyCommand": ["node", "out/hello.js"],
+  "tasks": [
+    {
+      "id": "scaffold",
+      "role": "backend",
+      "tier": "sonnet",
+      "deps": [],
+      "instruction": "Create out/hello.js, a Node.js script that prints 'hello' to stdout."
+    },
+    {
+      "id": "polish",
+      "role": "backend",
+      "tier": "sonnet",
+      "deps": ["scaffold"],
+      "instruction": "Add a trailing newline check and a comment header to out/hello.js."
+    }
+  ]
+}

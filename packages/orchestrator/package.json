@@ -1,0 +1,22 @@
+{
+  "name": "@flow/orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The integration seam: drives a full autonomous run by wiring the CEO, the executor, and the runtime.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-run": "dist/cli.js"
+  },
+  "dependencies": {
+    "@flow/core": "*",
+    "@flow/ceo": "*",
+    "@flow/executor": "*",
+    "@flow/llm": "*",
+    "@flow/context": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

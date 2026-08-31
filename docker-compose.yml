@@ -120,6 +120,26 @@ services:
     volumes:
       - exec-work:/work
 
+  # The `flow-run` CLI — the autonomous loop: CEO decides, executor implements + verifies each
+  # ready task, runtime tracks status and advances waves.
+  #   docker compose run --rm run /work/config.json
+  # (config + targetDir live on the volume; needs a real LLM backend)
+  run:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/orchestrator/dist/cli.js"]
+    environment:
+      FLOW_HOME: /work/.flow
+      FLOW_LLM_PROVIDER: ${FLOW_LLM_PROVIDER:-fake}
+      FLOW_LLM_BASE_URL: ${FLOW_LLM_BASE_URL:-}
+      FLOW_LLM_API_KEY: ${FLOW_LLM_API_KEY:-}
+      FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
+      FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
+    volumes:
+      - flow-state:/work
+
 volumes:
   flow-state:
   exec-work:

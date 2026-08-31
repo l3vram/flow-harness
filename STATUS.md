@@ -109,11 +109,27 @@ only component that writes product code.
   verify's pass/fail/output capture, and end-to-end runs against a scripted `FakeProvider`).
   **86 tests green total.**
 
+### v0.7 — orchestrator (autonomous loop) ✅
+The integration seam: a conductor that drives a full autonomous run by wiring the existing
+pieces together, with **no new judgment logic** of its own.
+
+- ✅ **`@flow/orchestrator`** — `Orchestrator.run()` loops the CEO's decision (`dispatch`
+  deterministically runs every `runtime.ready()` task through the executor, `advance` moves the
+  wave forward when it's actually done, `await_human`/`complete` stop the run), the executor
+  implements and verifies each dispatched task, and the runtime tracks status and wave
+  membership. Bounded by `maxSteps`; stops early when nothing is ready. Optional `@flow/context`
+  wiring assembles repo context per task instruction.
+- ✅ bin `flow-run`; compose service `run`
+  (`docker compose run --rm run /work/config.json`; needs a real LLM backend).
+- ✅ **3 new tests** (happy path across two dependent tasks, a verify failure that blocks a task
+  and prevents completion, and a dispatched task with no matching spec handled safely).
+  **89 tests green total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.7+ — the rest of the plan ⬜ (next)
+### v0.8+ — the rest of the plan ⬜ (next)
 Layered memory · research · QA engine + Playwright evidence · risk/review · repair/replan ·
 evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
 deployment. Each becomes its own package on top of the spine. Details per section in
