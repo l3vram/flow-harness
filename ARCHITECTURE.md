@@ -139,6 +139,7 @@ stateDiagram-v2
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
 | `@flow/executor` | Turns a task + context into applied file changes in a target dir, then runs the verify command. The only writer of product code. | llm, context | ✅ v0.6 |
 | `@flow/orchestrator` | The conductor: drives CEO → executor → runtime (decide → write+verify → advance) for a full autonomous run. `flow-run <config.json>`. | core, ceo, executor, llm, context | ✅ v0.7 |
+| `@flow/memory` | Append-only lessons store + relevance search (reuses the context tokenizer) — the CEO's memory across runs. **Authored by the harness itself.** | context | ✅ v0.8 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)

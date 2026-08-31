@@ -125,12 +125,25 @@ pieces together, with **no new judgment logic** of its own.
   and prevents completion, and a dispatched task with no matching spec handled safely).
   **89 tests green total.**
 
+### v0.8 — lessons memory ✅ — *authored by the harness itself*
+The first increment the harness built of itself. Driven by `flow-run` under human gates: the
+human approved the plan (Gate A), the CEO dispatched, the executor (Groq `openai/gpt-oss-120b`,
+via the v0.6.1 file-block format) wrote all 8 files, verify ran `npx vitest run packages/memory`
+(4 tests pass), and the CEO paused at Gate B for the human's review. The brain reviewed the code
+and integrated it (`tsc -b` clean, full suite green). git confirmed only this package was created.
+
+- ✅ **`@flow/memory`** — `MemoryStore` over an append-only JSONL log (`add`/`all`, deterministic);
+  `searchLessons` ranks lessons by query-term overlap (reusing `@flow/context`'s tokenizer),
+  returning top-K.
+- ✅ **4 new tests** (store round-trip + empty-file, search ranking + `k` limit + no-match).
+  **94 tests green total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.8+ — the rest of the plan ⬜ (next)
-Layered memory · research · QA engine + Playwright evidence · risk/review · repair/replan ·
+### v0.9+ — the rest of the plan ⬜ (next)
+Research · QA engine + Playwright evidence · risk/review · repair/replan ·
 evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
 deployment. Each becomes its own package on top of the spine. Details per section in
 `PLAN.md`.
