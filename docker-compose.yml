@@ -72,6 +72,19 @@ services:
     volumes:
       - flow-state:/work
 
+  # The `flow-context` CLI — deterministic, LLM-free repo indexing + ranked context bundles.
+  #   docker compose run --rm context "circuit breaker"
+  context:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/context/dist/cli.js"]
+    environment:
+      FLOW_CONTEXT_ROOT: /project
+    volumes:
+      - ./:/project:ro
+
   # Iterate on the source with the suite in watch mode. Source is mounted; deps stay in the
   # image. Rebuilds and re-runs on change.
   #   docker compose up dev

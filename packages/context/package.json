@@ -1,0 +1,15 @@
+{
+  "name": "@flow/context",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic, LLM-free context engine — index a project, score files against a query, and assemble a token-budgeted bundle of snippets with source attribution.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-context": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ]
+}

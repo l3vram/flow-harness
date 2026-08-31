@@ -76,15 +76,31 @@ move as structured JSON, then applies only DAG-safe actions.
 - ✅ **14 new tests** (decision parsing incl. embedded-prose and confidence clamping, `decide`/
   `step`/`run` against a scripted `FakeProvider`). **55 tests green total.**
 
+### v0.5 — context engine ✅
+A deterministic, **LLM-free** context engine: index a project directory, rank files against a
+query, and assemble a token-budgeted bundle of snippets with source attribution — so the brain
+(CEO) and future executors decide with repo context instead of cold exploration.
+
+- ✅ **`@flow/context`** — `indexProject` (recursive, ignore-aware, binary/oversized-file
+  skipping, sorted by path for determinism), `scoreEntry`/`tokenize` (deterministic path +
+  content scoring, no randomness/clock/network/LLM), and `ContextEngine.assemble` (greedy
+  token-budgeted packing with snippet extraction).
+- ✅ Token-budgeted `ContextBundle` output (`items`, `sources`, `tokenBudget`,
+  `estimatedTokens` — an estimate, never a billed count).
+- ✅ bin `flow-context`; compose service `context`
+  (`docker compose run --rm context "circuit breaker"`).
+- ✅ **7 new tests** (indexer walk/ignore/binary/size rules, score heuristics, engine ranking
+  and budget packing). **62 tests green total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.5+ — the rest of the plan ⬜ (next)
-Context engine · layered memory · research · QA engine + Playwright evidence · risk/review ·
-repair/replan · evaluation harness · controlled learning/policy promotion · MCP resources &
-apps · remote deployment. Each becomes its own package on top of the spine. Details per
-section in `PLAN.md`.
+### v0.6+ — the rest of the plan ⬜ (next)
+Layered memory · research · QA engine + Playwright evidence · risk/review · repair/replan ·
+evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
+deployment. Each becomes its own package on top of the spine. Details per section in
+`PLAN.md`.
 
 ---
 
