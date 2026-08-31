@@ -9,7 +9,8 @@
     { "path": "../ceo" },
     { "path": "../executor" },
     { "path": "../llm" },
-    { "path": "../context" }
+    { "path": "../context" },
+    { "path": "../memory" }
   ],
   "include": ["src/**/*"]
 }

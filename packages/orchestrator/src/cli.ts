@@ -5,6 +5,7 @@ import { Runtime, type GateId } from "@flow/core";
 import { Ceo } from "@flow/ceo";
 import { Executor } from "@flow/executor";
 import { routerFromEnv } from "@flow/llm";
+import { MemoryStore } from "@flow/memory";
 import { Orchestrator } from "./orchestrator.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
@@ -56,6 +57,18 @@ async function main(): Promise<void> {
   });
 
   const report = await orchestrator.run();
+
+  // Learn from this run: record one lesson so future runs can recall what was built.
+  const greenTasks = report.tasks.filter((t) => t.status === "green").map((t) => t.id);
+  const roles = [...new Set(config.tasks.map((t) => t.role))];
+  new MemoryStore(join(base, "lessons.jsonl")).add({
+    id: config.runId,
+    scope: "run",
+    content: `${config.objective} — completed=${report.completed}; green: ${greenTasks.join(", ") || "none"}`,
+    tags: roles,
+    createdAt: new Date().toISOString(),
+  });
+
   console.log(JSON.stringify(report, null, 2));
 }
 
