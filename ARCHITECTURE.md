@@ -41,12 +41,17 @@ flowchart TB
     OAI["OpenAICompatibleProvider — any /chat/completions"]
   end
 
+  subgraph Context["Context · deterministic, no LLM"]
+    CTX["@flow/context — index + rank + token-budgeted bundles"]
+  end
+
   Human --> CLI
   Human --> MCP
   CLI --> CORE
   MCP --> CORE
   CEO --> CORE
   CEO --> LLM
+  CEO --> CTX
   LLM --> FAKE
   LLM --> OAI
   CORE --> SCHED
@@ -123,6 +128,8 @@ stateDiagram-v2
 | `@flow/mcp-server` | MCP server exposing 10 high-level `flow_*` tools; any host can drive a run. | core, MCP SDK | ✅ v0.4 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `ModelRouter`, `routerFromEnv`. Zero deps. | — | ✅ v0.2 |
 | `@flow/ceo` | Thin executive loop: observe state → decide next move via the LLM → gate/apply. Never edits code. | core, llm | ✅ v0.3 |
+| `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
+| `@flow/executor` | Turns a task + context into applied file changes in a worktree, then runs the verify command. The only writer of product code. | llm, context | 🚧 v0.6 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)
@@ -159,9 +166,11 @@ criteria (build + tests in Docker), not by an agent's say-so.
 
 ## Where this is going
 
-With the `v0.3` CEO loop in place, next is `v0.5+`: context engine · layered memory · research ·
-QA engine + Playwright evidence · risk/review · repair/replan · evaluation · controlled learning ·
-MCP resources & apps · remote deployment. The end state: point the harness at its own repository and
+With the `v0.5` context engine in place, next is `v0.6` — a real **executor** that turns the CEO's
+`dispatch` decisions into applied changes in a worktree (guarded, verified), the keystone for
+"actually builds things". Then: layered memory · research · QA engine + Playwright evidence ·
+risk/review · repair/replan · evaluation · controlled learning · MCP resources & apps · remote
+deployment. The end state: point the harness at its own repository and
 let it build its next increments — which only works because the spine beneath it is
 deterministic, resumable and auditable. Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real
 plan).
