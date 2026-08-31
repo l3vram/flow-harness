@@ -1,0 +1,19 @@
+{
+  "name": "@flow/executor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The keystone that turns a task into real work: asks the model for full file contents, applies them inside a target directory only, then runs a configured verify command.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-exec": "dist/cli.js"
+  },
+  "dependencies": {
+    "@flow/llm": "*",
+    "@flow/context": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

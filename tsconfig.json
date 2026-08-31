@@ -6,6 +6,7 @@
     { "path": "packages/mcp-server" },
     { "path": "packages/llm" },
     { "path": "packages/ceo" },
-    { "path": "packages/context" }
+    { "path": "packages/context" },
+    { "path": "packages/executor" }
   ]
 }

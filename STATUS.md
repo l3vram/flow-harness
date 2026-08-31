@@ -92,11 +92,28 @@ query, and assemble a token-budgeted bundle of snippets with source attribution 
 - ✅ **7 new tests** (indexer walk/ignore/binary/size rules, score heuristics, engine ranking
   and budget packing). **62 tests green total.**
 
+### v0.6 — executor ✅
+The keystone that turns a task into real work: given a task instruction and optional repository
+context, asks the model for the full contents of every file it needs, applies them inside a
+target directory only, then runs a configured verify command and reports the result. It is the
+only component that writes product code.
+
+- ✅ **`@flow/executor`** — path safety (`isSafeRelativePath`: rejects empty, leading `/`,
+  backslashes, and any `.`/`..` segment) plus an independent containment guard in `applyChanges`
+  (defense in depth); the verify command comes only from `ExecutorOptions.verifyCommand`, never
+  from model output; writes only under `targetDir`.
+- ✅ bin `flow-exec`; compose service `exec` with an isolated named volume `exec-work:/work` (the
+  executor never writes into the repo itself)
+  (`docker compose run --rm exec /work "create hello.js that prints hi"`).
+- ✅ **24 new tests** (path/JSON parsing incl. unsafe-path rejection, apply's containment guard,
+  verify's pass/fail/output capture, and end-to-end runs against a scripted `FakeProvider`).
+  **86 tests green total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.6+ — the rest of the plan ⬜ (next)
+### v0.7+ — the rest of the plan ⬜ (next)
 Layered memory · research · QA engine + Playwright evidence · risk/review · repair/replan ·
 evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
 deployment. Each becomes its own package on top of the spine. Details per section in

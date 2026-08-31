@@ -100,5 +100,26 @@ services:
       - ./vitest.config.ts:/app/vitest.config.ts
     command: npm run test:watch
 
+  # The `flow-exec` CLI — asks the model for full file contents, applies them inside the
+  # target directory only, then runs the configured verify command.
+  #   docker compose run --rm exec /work "create hello.js that prints hi"
+  # (needs a real LLM backend)
+  exec:
+    build:
+      context: .
+      target: runtime
+    image: flow-harness
+    entrypoint: ["node", "/app/packages/executor/dist/cli.js"]
+    environment:
+      FLOW_LLM_PROVIDER: ${FLOW_LLM_PROVIDER:-fake}
+      FLOW_LLM_BASE_URL: ${FLOW_LLM_BASE_URL:-}
+      FLOW_LLM_API_KEY: ${FLOW_LLM_API_KEY:-}
+      FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
+      FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
+      FLOW_EXEC_VERIFY: ${FLOW_EXEC_VERIFY:-}
+    volumes:
+      - exec-work:/work
+
 volumes:
   flow-state:
+  exec-work:
