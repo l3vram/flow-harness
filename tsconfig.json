@@ -9,6 +9,7 @@
     { "path": "packages/context" },
     { "path": "packages/executor" },
     { "path": "packages/orchestrator" },
-    { "path": "packages/memory" }
+    { "path": "packages/memory" },
+    { "path": "packages/review" }
   ]
 }
