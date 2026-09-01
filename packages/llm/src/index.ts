@@ -8,3 +8,4 @@ export {
 export { AnthropicProvider, type AnthropicProviderOptions } from "./providers/anthropic.js";
 export { ModelRouter } from "./router.js";
 export { routerFromEnv } from "./config.js";
+export { fetchWithRetry, type RetryOptions } from "./retry.js";

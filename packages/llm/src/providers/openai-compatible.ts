@@ -1,4 +1,5 @@
 import type { LLMProvider, ProviderRequest, CompletionResult } from "../types.js";
+import { fetchWithRetry } from "../retry.js";
 
 /** Minimal shape of `fetch` we depend on, so tests can inject a fake without a network stack. */
 export type FetchLike = (
@@ -11,6 +12,8 @@ export interface OpenAICompatibleProviderOptions {
   apiKey?: string;
   name?: string;
   fetchImpl?: FetchLike;
+  maxRetries?: number;
+  retryBaseMs?: number;
 }
 
 /**
@@ -23,12 +26,16 @@ export class OpenAICompatibleProvider implements LLMProvider {
   private readonly baseUrl: string;
   private readonly apiKey: string | undefined;
   private readonly fetchImpl: FetchLike;
+  private readonly maxRetries: number;
+  private readonly retryBaseMs: number;
 
   constructor(options: OpenAICompatibleProviderOptions) {
     this.name = options.name ?? "openai-compatible";
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.apiKey = options.apiKey;
     this.fetchImpl = options.fetchImpl ?? resolveGlobalFetch();
+    this.maxRetries = options.maxRetries ?? 3;
+    this.retryBaseMs = options.retryBaseMs ?? 500;
   }
 
   async complete(req: ProviderRequest): Promise<CompletionResult> {
@@ -39,11 +46,16 @@ export class OpenAICompatibleProvider implements LLMProvider {
     if (req.maxTokens !== undefined) body["max_tokens"] = req.maxTokens;
     if (req.temperature !== undefined) body["temperature"] = req.temperature;
 
-    const res = await this.fetchImpl(`${this.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    const res = await fetchWithRetry(
+      this.fetchImpl,
+      `${this.baseUrl}/chat/completions`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      },
+      { maxRetries: this.maxRetries, baseMs: this.retryBaseMs },
+    );
     if (!res.ok) {
       throw new Error(`LLM request failed ${res.status}: ${await res.text()}`);
     }

@@ -1,5 +1,6 @@
 import type { LLMProvider, ProviderRequest, CompletionResult } from "../types.js";
 import type { FetchLike } from "./openai-compatible.js";
+import { fetchWithRetry } from "../retry.js";
 
 export interface AnthropicProviderOptions {
   apiKey?: string;
@@ -7,6 +8,8 @@ export interface AnthropicProviderOptions {
   name?: string;
   maxTokens?: number;
   fetchImpl?: FetchLike;
+  maxRetries?: number;
+  retryBaseMs?: number;
 }
 
 /**
@@ -21,6 +24,8 @@ export class AnthropicProvider implements LLMProvider {
   private readonly baseUrl: string;
   private readonly maxTokens: number;
   private readonly fetchImpl: FetchLike;
+  private readonly maxRetries: number;
+  private readonly retryBaseMs: number;
 
   constructor(options: AnthropicProviderOptions = {}) {
     this.name = options.name ?? "anthropic";
@@ -28,6 +33,8 @@ export class AnthropicProvider implements LLMProvider {
     this.baseUrl = (options.baseUrl ?? "https://api.anthropic.com/v1").replace(/\/+$/, "");
     this.maxTokens = options.maxTokens ?? 4096;
     this.fetchImpl = options.fetchImpl ?? resolveGlobalFetch();
+    this.maxRetries = options.maxRetries ?? 3;
+    this.retryBaseMs = options.retryBaseMs ?? 500;
   }
 
   async complete(req: ProviderRequest): Promise<CompletionResult> {
@@ -53,11 +60,16 @@ export class AnthropicProvider implements LLMProvider {
     };
     if (this.apiKey !== undefined) headers["x-api-key"] = this.apiKey;
 
-    const res = await this.fetchImpl(`${this.baseUrl}/messages`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    const res = await fetchWithRetry(
+      this.fetchImpl,
+      `${this.baseUrl}/messages`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      },
+      { maxRetries: this.maxRetries, baseMs: this.retryBaseMs },
+    );
     if (!res.ok) {
       throw new Error(`LLM request failed ${res.status}: ${await res.text()}`);
     }

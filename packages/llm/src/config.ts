@@ -9,13 +9,14 @@ const TIERS: Tier[] = ["haiku", "sonnet", "opus"];
 interface ProviderConfig {
   apiKey: string | undefined;
   baseUrl: string | undefined;
+  maxRetries: number | undefined;
 }
 
 /**
  * Builds the concrete provider instance for a given `kind`, given the resolved per-tier (or
  * global-fallback) credentials/endpoint.
  */
-function makeProvider(kind: string, { apiKey, baseUrl }: ProviderConfig): LLMProvider {
+function makeProvider(kind: string, { apiKey, baseUrl, maxRetries }: ProviderConfig): LLMProvider {
   if (kind === "fake") {
     return new FakeProvider();
   }
@@ -23,10 +24,10 @@ function makeProvider(kind: string, { apiKey, baseUrl }: ProviderConfig): LLMPro
     if (!baseUrl) {
       throw new Error("FLOW_LLM_BASE_URL is required when the provider is 'openai'");
     }
-    return new OpenAICompatibleProvider({ baseUrl, apiKey });
+    return new OpenAICompatibleProvider({ baseUrl, apiKey, maxRetries });
   }
   if (kind === "anthropic") {
-    return new AnthropicProvider({ apiKey, baseUrl });
+    return new AnthropicProvider({ apiKey, baseUrl, maxRetries });
   }
   throw new Error(`unknown provider '${kind}' (use 'fake', 'openai', or 'anthropic')`);
 }
@@ -59,6 +60,7 @@ function defaultModel(kind: string, tier: Tier): string {
 export function routerFromEnv(env: NodeJS.ProcessEnv = process.env): ModelRouter {
   const providers = new Map<string, LLMProvider>();
   const profiles: ModelProfile[] = [];
+  const maxRetries = env.FLOW_LLM_MAX_RETRIES ? Number(env.FLOW_LLM_MAX_RETRIES) : undefined;
 
   for (const tier of TIERS) {
     const u = tier.toUpperCase();
@@ -71,7 +73,7 @@ export function routerFromEnv(env: NodeJS.ProcessEnv = process.env): ModelRouter
       env.FLOW_LLM_MODEL ||
       defaultModel(kind, tier);
 
-    const provider = makeProvider(kind, { apiKey, baseUrl });
+    const provider = makeProvider(kind, { apiKey, baseUrl, maxRetries });
     providers.set(tier, provider);
     profiles.push({ tier, provider: tier, model });
   }

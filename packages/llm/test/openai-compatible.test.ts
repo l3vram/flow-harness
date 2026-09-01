@@ -72,7 +72,47 @@ describe("OpenAICompatibleProvider", () => {
 
   it("throws with the status code on a non-ok response", async () => {
     const { fetchImpl } = cannedFetch({ ok: false, status: 500, body: { error: "boom" } });
-    const provider = new OpenAICompatibleProvider({ baseUrl: "http://localhost:1234", fetchImpl });
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: "http://localhost:1234",
+      fetchImpl,
+      retryBaseMs: 0,
+    });
     await expect(provider.complete({ model: "m", messages: [] })).rejects.toThrow(/500/);
+  });
+
+  it("retries a transient 503 and succeeds on the following 200", async () => {
+    const responses = [
+      { ok: false, status: 503, body: { error: "unavailable" } },
+      {
+        ok: true,
+        status: 200,
+        body: { model: "gpt-4o-mini", choices: [{ message: { content: "recovered" } }] },
+      },
+    ];
+    const calls: Array<{ url: string; init: { method: string; headers: Record<string, string>; body: string } }> = [];
+    const fetchImpl: FetchLike = async (url, init) => {
+      calls.push({ url, init });
+      const response = responses.length > 1 ? responses.shift()! : responses[0]!;
+      return {
+        ok: response.ok,
+        status: response.status,
+        async text() {
+          return JSON.stringify(response.body);
+        },
+        async json() {
+          return response.body;
+        },
+      };
+    };
+    const provider = new OpenAICompatibleProvider({
+      baseUrl: "http://localhost:1234",
+      fetchImpl,
+      retryBaseMs: 0,
+    });
+
+    const result = await provider.complete({ model: "gpt-4o-mini", messages: [] });
+
+    expect(calls).toHaveLength(2);
+    expect(result.text).toBe("recovered");
   });
 });
