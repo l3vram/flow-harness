@@ -135,10 +135,10 @@ stateDiagram-v2
 | `@flow/cli` | The `flow` binary; a drop-in for `flow.sh`. | core | ✅ v0.1 |
 | `@flow/mcp-server` | MCP server exposing 10 high-level `flow_*` tools; any host can drive a run. | core, MCP SDK | ✅ v0.4 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `ModelRouter`, `routerFromEnv`. Zero deps. | — | ✅ v0.2 |
-| `@flow/ceo` | Thin executive loop: observe state → decide next move via the LLM → gate/apply. Never edits code. | core, llm | ✅ v0.3 |
+| `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
-| `@flow/executor` | Turns a task + context into applied file changes in a target dir, then runs the verify command. The only writer of product code. | llm, context | ✅ v0.6 |
-| `@flow/orchestrator` | The conductor: drives CEO → executor → runtime (decide → write+verify → advance) for a full autonomous run. `flow-run <config.json>`. | core, ceo, executor, llm, context | ✅ v0.7 |
+| `@flow/executor` | Writes **and edits** (safe search/replace) code, then runs the verify command. The only writer of product code. | llm, context | ✅ v0.6 |
+| `@flow/orchestrator` | The conductor: CEO → executor → runtime, with a **repair loop** (retry a failed verify by feeding the error back), **risk gating** (high-risk → human review), and lesson recording. `flow-run <config.json>`. | core, ceo, executor, llm, context, memory, review | ✅ v0.7 |
 | `@flow/memory` | Append-only lessons store + relevance search (reuses the context tokenizer) — the CEO's memory across runs. `flow-run` records one lesson per run. **Authored by the harness itself.** | context | ✅ v0.8 |
 | `@flow/review` | Deterministic risk/review engine: `assessRisk` → level, review depth, model tier, human gate. **Self-built.** | — | ✅ v0.9 |
 
@@ -177,11 +177,12 @@ criteria (build + tests in Docker), not by an agent's say-so.
 
 ## Where this is going
 
-With `v0.7` the autonomous loop is closed: `flow-run` drives CEO → executor → runtime end to end
-(decide → write + verify → advance), proven against a real backend — including the CEO pausing at
-a pending human gate rather than auto-completing. Next, `v0.8+`: layered memory · research · QA
-engine + Playwright evidence · risk/review · repair/replan · evaluation · controlled learning ·
-MCP resources & apps · remote deployment. The end state: point the harness at its own repository and
+The autonomous loop is closed and, increasingly, capable: `flow-run` drives CEO → executor →
+runtime end to end, the CEO reasons with **memory + context**, the executor **edits real code**, and
+a **repair loop** lets runs converge on failures — all proven against real backends (Groq, and the
+CEO on Claude in a multi-LLM run). Next: **git worktree per run + a PR gate**, then a **planner**
+(objective → task DAG). Later: QA + Playwright (browser evidence) · evaluation harness · controlled
+learning · provider retry/backoff/fallback · MCP resources & apps · remote deployment. The end state: point the harness at its own repository and
 let it build its next increments — which only works because the spine beneath it is
 deterministic, resumable and auditable. Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real
 plan).

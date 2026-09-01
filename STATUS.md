@@ -156,16 +156,35 @@ Authored by the harness via `flow-run` (Groq); the brain reviewed it (clean) and
 The MCP surface can now build, not just manage the runtime. Proven end-to-end over the real
 protocol (`flow_start → flow_add_task → flow_execute` with Groq wrote a real test file).
 
+### v0.2.2 — multi-LLM routing per tier ✅
+Each tier (`haiku`/`sonnet`/`opus`) uses its own provider/model via `FLOW_LLM_<TIER>_*` env (fallback
+to global). New `AnthropicProvider` (raw Messages API). **Proven**: a run with the CEO on Claude and
+the executor on Groq.
+
+### v0.10 — the brain is wired ✅
+The CEO decides with recalled **lessons** (memory) + repo **context** (an advisor brief); the
+orchestrator routes **high-risk** changes to `review` (`assessRisk`). Every `flow-run` records a
+lesson (memory learns from each feature).
+
+### v0.6.2 — the executor EDITS existing files ✅
+Safe `<<<EDIT>>>` search/replace (unique-match, path-confined) alongside `<<<FILE>>>` create. **The
+#1 unlock: from "adds new files" to "modifies real code".** Proven with Groq editing a real file.
+
+### v0.11 — repair loop ✅
+A failed verify is fed back (error + current file contents) so the executor EDITs to fix, bounded by
+`maxRepairAttempts`. **Proven**: attempt 1 failed → the harness read the error and fixed itself →
+attempt 2 passed. Runs now converge. **121 tests total.**
+
 ---
 
 ## What remains (in priority order)
 
-### v0.10+ — the rest of the plan ⬜ (next)
-QA engine + Playwright evidence · repair/replan · evaluation harness · auto lesson-recall into
-CEO/executor prompts · research ·
-evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
-deployment. Each becomes its own package on top of the spine. Details per section in
-`PLAN.md`.
+### Next ⬜
+- **git worktree per run + PR gate** (Fase A part 2 — isolate runs, review a real PR).
+- **planner** (objective → task DAG; the CEO still can't decompose an objective into tasks).
+- QA engine + Playwright (browser evidence) · evaluation harness · controlled learning · provider
+  retry/backoff/fallback · MCP resources & apps · remote deployment. Each is its own package on the
+  spine; details per section in `PLAN.md`.
 
 ---
 
