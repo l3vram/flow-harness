@@ -140,13 +140,29 @@ and integrated it (`tsc -b` clean, full suite green). git confirmed only this pa
   returning top-K.
 - ✅ **4 new tests** (store round-trip + empty-file, search ranking + `k` limit + no-match).
   **94 tests green total.**
+- ✅ **Wired into the loop:** `flow-run` now records one lesson per run into
+  `<FLOW_HOME>/lessons.jsonl`. Verified end-to-end — building `@flow/review` recorded a lesson and
+  `searchLessons` recalled it. The harness now learns from each feature it builds.
+
+### v0.9 — risk/review engine ✅ — *self-built*
+Authored by the harness via `flow-run` (Groq); the brain reviewed it (clean) and integrated it.
+
+- ✅ **`@flow/review`** — `assessRisk(input)` scores a change by security surface, file/line
+  complexity and verify failure, then recommends `level` (low/medium/high), `reviewDepth`,
+  `recommendedTier`, and whether a `humanGate` is needed. Deterministic, no deps.
+- ✅ **3 new tests** (low / high / medium assessments). **101 tests green total.**
+
+### flow_execute — execution over MCP ✅ (v0.4.1)
+The MCP surface can now build, not just manage the runtime. Proven end-to-end over the real
+protocol (`flow_start → flow_add_task → flow_execute` with Groq wrote a real test file).
 
 ---
 
 ## What remains (in priority order)
 
-### v0.9+ — the rest of the plan ⬜ (next)
-Research · QA engine + Playwright evidence · risk/review · repair/replan ·
+### v0.10+ — the rest of the plan ⬜ (next)
+QA engine + Playwright evidence · repair/replan · evaluation harness · auto lesson-recall into
+CEO/executor prompts · research ·
 evaluation harness · controlled learning/policy promotion · MCP resources & apps · remote
 deployment. Each becomes its own package on top of the spine. Details per section in
 `PLAN.md`.
