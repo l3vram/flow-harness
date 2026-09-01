@@ -110,4 +110,29 @@ describe("Orchestrator", () => {
     expect(report.outcomes.a?.status).toBe("blocked");
     expect(report.outcomes.a?.reason).toBe("no task spec");
   });
+
+  it("a high-risk change that passes verify goes to review, not green", async () => {
+    const runtime = Runtime.init(runDir, "r4", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "touch auth" }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(
+      execRouter([
+        { path: "auth.ts", content: "x" },
+        { path: "b.ts", content: "y" },
+        { path: "c.ts", content: "z" },
+      ]),
+      {},
+    );
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("review");
+    expect(report.outcomes.a?.risk?.level).toBe("high");
+  });
 });

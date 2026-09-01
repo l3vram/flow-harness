@@ -15,7 +15,7 @@ Reply with ONLY a JSON object, no prose, of exactly this shape:
  * Builds the two-message prompt the CEO sends the model: a fixed system instruction plus a
  * user message carrying a JSON snapshot of the run (runtime-only fields omitted).
  */
-export function buildDecisionMessages(state: State, ready: string[]): Message[] {
+export function buildDecisionMessages(state: State, ready: string[], advisory = ""): Message[] {
   const snapshot = {
     objective: state.objective,
     phase: state.phase,
@@ -31,8 +31,12 @@ export function buildDecisionMessages(state: State, ready: string[]): Message[] 
       deps: p.deps,
     })),
   };
+  let userContent = JSON.stringify(snapshot);
+  if (advisory !== "") {
+    userContent += "\n\nAdvisories (memory, context):\n" + advisory;
+  }
   return [
     { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: JSON.stringify(snapshot) },
+    { role: "user", content: userContent },
   ];
 }

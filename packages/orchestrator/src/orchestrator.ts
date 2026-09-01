@@ -2,6 +2,7 @@ import type { Runtime } from "@flow/core";
 import type { Ceo } from "@flow/ceo";
 import type { Executor } from "@flow/executor";
 import { ContextEngine } from "@flow/context";
+import { assessRisk } from "@flow/review";
 import type { OrchestratorOptions, RunReport, TaskOutcome, TaskSpec } from "./types.js";
 
 const DEFAULT_MAX_STEPS = 20;
@@ -73,13 +74,18 @@ export class Orchestrator {
           { targetDir: this.opts.targetDir, context },
         );
         const ok = result.verify.ok; // verify.ran === false ⇒ ok true (nothing configured)
-        this.runtime.setStatus(taskId, ok ? "green" : "blocked", ok ? "" : "verify failed");
-        outcomes[taskId] = {
-          status: ok ? "green" : "blocked",
-          files: result.files,
-          verify: result.verify,
-          reason: result.reason,
-        };
+        const risk = assessRisk({
+          filesChanged: result.files,
+          verifyFailed: !ok,
+          touchesSecurity: result.files.some((f) => /auth|secret|password|token|crypt|exec|spawn/i.test(f)),
+        });
+        let status: "green" | "blocked" | "review";
+        if (!ok) status = "blocked";
+        else if (risk.level === "high") status = "review"; // passed verify but high risk — a human must look
+        else status = "green";
+        const reason = !ok ? "verify failed" : status === "review" ? "high risk — needs human review" : "";
+        this.runtime.setStatus(taskId, status, reason);
+        outcomes[taskId] = { status, files: result.files, verify: result.verify, reason: result.reason, risk };
       }
     }
 

@@ -1,4 +1,4 @@
-import type { Runtime } from "@flow/core";
+import type { Runtime, State } from "@flow/core";
 import type { ModelRouter, Tier } from "@flow/llm";
 import { buildDecisionMessages } from "./prompt.js";
 import { parseDecision } from "./parse.js";
@@ -7,6 +7,7 @@ import type { CeoDecision } from "./types.js";
 export interface CeoOptions {
   tier?: Tier;
   autoApply?: boolean;
+  advisor?: (state: State) => string;
 }
 
 /**
@@ -26,7 +27,8 @@ export class Ceo {
   async decide(): Promise<CeoDecision> {
     const state = this.runtime.state;
     const ready = this.runtime.ready();
-    const messages = buildDecisionMessages(state, ready);
+    const advisory = this.opts.advisor ? this.opts.advisor(state) : "";
+    const messages = buildDecisionMessages(state, ready, advisory);
     const res = await this.router.complete({ tier: this.opts.tier ?? "opus", messages });
     return parseDecision(res.text);
   }

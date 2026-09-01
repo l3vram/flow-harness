@@ -10,7 +10,8 @@
     { "path": "../executor" },
     { "path": "../llm" },
     { "path": "../context" },
-    { "path": "../memory" }
+    { "path": "../memory" },
+    { "path": "../review" }
   ],
   "include": ["src/**/*"]
 }

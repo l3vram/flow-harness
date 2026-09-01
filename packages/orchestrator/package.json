@@ -15,7 +15,8 @@
     "@flow/executor": "*",
     "@flow/llm": "*",
     "@flow/context": "*",
-    "@flow/memory": "*"
+    "@flow/memory": "*",
+    "@flow/review": "*"
   },
   "files": [
     "dist"

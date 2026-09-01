@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Runtime, type GateId } from "@flow/core";
+import { Runtime, type GateId, type State } from "@flow/core";
 import { Ceo } from "@flow/ceo";
 import { Executor } from "@flow/executor";
 import { routerFromEnv } from "@flow/llm";
-import { MemoryStore } from "@flow/memory";
+import { MemoryStore, searchLessons } from "@flow/memory";
+import { ContextEngine } from "@flow/context";
 import { Orchestrator } from "./orchestrator.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
@@ -48,7 +49,19 @@ async function main(): Promise<void> {
   }
 
   const router = routerFromEnv();
-  const ceo = new Ceo(runtime, router);
+  const lessonStore = new MemoryStore(join(base, "lessons.jsonl"));
+  const contextEngine = config.contextRoot ? ContextEngine.index(config.contextRoot) : null;
+  const advisor = (state: State): string => {
+    const parts: string[] = [];
+    const lessons = searchLessons(lessonStore.all(), state.objective, 3);
+    if (lessons.length > 0) parts.push("Past lessons:\n" + lessons.map((l) => "- " + l.content).join("\n"));
+    if (contextEngine) {
+      const bundle = contextEngine.assemble({ query: state.objective, tokenBudget: 1200 });
+      if (bundle.items.length > 0) parts.push("Relevant files:\n" + bundle.items.map((i) => "- " + i.path).join("\n"));
+    }
+    return parts.join("\n\n");
+  };
+  const ceo = new Ceo(runtime, router, { advisor });
   const executor = new Executor(router, { verifyCommand: config.verifyCommand ?? [] });
   const orchestrator = new Orchestrator(runtime, ceo, executor, specs, {
     targetDir: config.targetDir,

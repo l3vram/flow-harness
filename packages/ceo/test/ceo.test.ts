@@ -97,4 +97,30 @@ describe("Ceo", () => {
     expect(decisions[0]?.action).toBe("advance");
     expect(decisions[1]?.action).toBe("complete");
   });
+
+  it("decide() includes the advisor's advisory text in the prompt sent to the provider", async () => {
+    const rt = Runtime.init(dir, "r", "obj");
+    rt.addTask("a", "backend", "sonnet", []);
+
+    const requests: ProviderRequest[] = [];
+    const provider = new FakeProvider({
+      responder: (req) => {
+        requests.push(req);
+        return decisionJson("dispatch");
+      },
+    });
+    const router = new ModelRouter(
+      new Map([[provider.name, provider]]),
+      [{ tier: "opus", provider: provider.name, model: "m" }],
+      "opus",
+    );
+
+    const ceo = new Ceo(rt, router, { advisor: () => "REMEMBER: prefer X" });
+    await ceo.decide();
+
+    expect(requests).toHaveLength(1);
+    const userMessage = requests[0]?.messages.find((m) => m.role === "user");
+    expect(userMessage?.content).toContain("REMEMBER: prefer X");
+    expect(userMessage?.content).toContain("Advisories");
+  });
 });

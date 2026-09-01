@@ -1,6 +1,7 @@
 import type { Tier, Status } from "@flow/core";
 import type { CeoDecision } from "@flow/ceo";
 import type { VerifyResult } from "@flow/executor";
+import type { RiskAssessment } from "@flow/review";
 
 /** One task the orchestrator can dispatch: registered with the runtime and handed to the executor. */
 export interface TaskSpec {
@@ -23,6 +24,7 @@ export interface TaskOutcome {
   files: string[];
   verify: VerifyResult;
   reason: string;
+  risk?: RiskAssessment;
 }
 
 /** The full record of one autonomous run: every CEO decision and every task's final outcome. */
