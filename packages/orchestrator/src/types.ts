@@ -16,6 +16,7 @@ export interface OrchestratorOptions {
   targetDir: string;
   maxSteps?: number;
   contextRoot?: string;
+  maxRepairAttempts?: number;
 }
 
 /** The outcome of dispatching a single task through the executor. */
@@ -25,6 +26,7 @@ export interface TaskOutcome {
   verify: VerifyResult;
   reason: string;
   risk?: RiskAssessment;
+  attempts?: number;
 }
 
 /** The full record of one autonomous run: every CEO decision and every task's final outcome. */

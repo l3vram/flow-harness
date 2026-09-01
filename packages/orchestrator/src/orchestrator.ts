@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Runtime } from "@flow/core";
 import type { Ceo } from "@flow/ceo";
 import type { Executor } from "@flow/executor";
@@ -68,11 +70,21 @@ export class Orchestrator {
           continue;
         }
         this.runtime.setStatus(taskId, "running");
-        const context = this.contextFor(spec.instruction);
-        const result = await this.executor.run(
+        const baseContext = this.contextFor(spec.instruction);
+        const maxTries = (this.opts.maxRepairAttempts ?? 2) + 1;
+        let result = await this.executor.run(
           { id: taskId, instruction: spec.instruction },
-          { targetDir: this.opts.targetDir, context },
+          { targetDir: this.opts.targetDir, context: baseContext },
         );
+        let tries = 1;
+        while (!result.verify.ok && tries < maxTries) {
+          const repair = this.repairContext(result.files, result.verify.output);
+          result = await this.executor.run(
+            { id: taskId, instruction: spec.instruction },
+            { targetDir: this.opts.targetDir, context: baseContext + "\n\n" + repair },
+          );
+          tries++;
+        }
         const ok = result.verify.ok; // verify.ran === false ⇒ ok true (nothing configured)
         const risk = assessRisk({
           filesChanged: result.files,
@@ -85,7 +97,14 @@ export class Orchestrator {
         else status = "green";
         const reason = !ok ? "verify failed" : status === "review" ? "high risk — needs human review" : "";
         this.runtime.setStatus(taskId, status, reason);
-        outcomes[taskId] = { status, files: result.files, verify: result.verify, reason: result.reason, risk };
+        outcomes[taskId] = {
+          status,
+          files: result.files,
+          verify: result.verify,
+          reason: result.reason,
+          risk,
+          attempts: tries,
+        };
       }
     }
 
@@ -105,5 +124,25 @@ export class Orchestrator {
     if (this.context === null) return "";
     const bundle = this.context.assemble({ query: instruction, tokenBudget: CONTEXT_TOKEN_BUDGET });
     return bundle.items.map((item) => "// " + item.path + "\n" + item.snippet).join("\n\n");
+  }
+
+  /** Builds the extra context for a repair retry: the verify failure plus current file contents. */
+  private repairContext(files: string[], verifyOutput: string): string {
+    const shown = files.map((f) => {
+      const abs = join(this.opts.targetDir, f);
+      const content = existsSync(abs) ? readFileSync(abs, "utf8") : "(missing)";
+      return `--- ${f} ---\n${content}`;
+    });
+    return [
+      "The previous attempt did not pass verification.",
+      "",
+      "Verify output:",
+      verifyOutput,
+      "",
+      "Current content of the files you changed:",
+      shown.join("\n\n"),
+      "",
+      "Fix the problem by EDITing the file(s) so verification passes.",
+    ].join("\n");
   }
 }

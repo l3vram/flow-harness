@@ -37,6 +37,12 @@ function execRouter(files: { path: string; content: string }[]): ModelRouter {
   return new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "sonnet", provider: provider.name, model: "m" }], "sonnet");
 }
 
+/** A ModelRouter whose provider scripts a sequence of raw executor block-text responses, in order. */
+function scriptedExecRouter(responses: string[]): ModelRouter {
+  const provider = new FakeProvider({ responder: scripted(responses) });
+  return new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "sonnet", provider: provider.name, model: "m" }], "sonnet");
+}
+
 describe("Orchestrator", () => {
   let runDir: string;
   let targetDir: string;
@@ -70,6 +76,8 @@ describe("Orchestrator", () => {
     expect(report.completed).toBe(true);
     expect(report.outcomes.a?.status).toBe("green");
     expect(report.outcomes.b?.status).toBe("green");
+    expect(report.outcomes.a?.attempts).toBe(1);
+    expect(report.outcomes.b?.attempts).toBe(1);
     expect(existsSync(join(targetDir, "out.txt"))).toBe(true);
     expect(readFileSync(join(targetDir, "out.txt"), "utf8")).toBe("x");
   });
@@ -134,5 +142,52 @@ describe("Orchestrator", () => {
 
     expect(report.outcomes.a?.status).toBe("review");
     expect(report.outcomes.a?.risk?.level).toBe("high");
+  });
+
+  const verifyGood = [
+    "node",
+    "-e",
+    "const fs=require('node:fs');process.exit(fs.readFileSync('out.txt','utf8').trim()==='GOOD'?0:1)",
+  ];
+
+  it("repair succeeds: a failing task is retried and passes on the second attempt", async () => {
+    const runtime = Runtime.init(runDir, "r5", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(
+      scriptedExecRouter(["<<<FILE out.txt>>>\nBAD\n<<<END>>>", "<<<FILE out.txt>>>\nGOOD\n<<<END>>>"]),
+      { verifyCommand: verifyGood },
+    );
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.a?.attempts).toBe(2);
+  });
+
+  it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
+    const runtime = Runtime.init(runDir, "r6", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "BAD" }]), {
+      verifyCommand: verifyGood,
+    });
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("blocked");
+    expect(report.outcomes.a?.attempts).toBe(3);
   });
 });
