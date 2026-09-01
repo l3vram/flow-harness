@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { FakeProvider, ModelRouter, OpenAICompatibleProvider, routerFromEnv } from "../src/index.js";
+import {
+  AnthropicProvider,
+  FakeProvider,
+  ModelRouter,
+  OpenAICompatibleProvider,
+  routerFromEnv,
+} from "../src/index.js";
 
 describe("ModelRouter", () => {
   it("throws when given no profiles", () => {
@@ -87,5 +93,27 @@ describe("routerFromEnv", () => {
 
   it("throws for an unknown provider kind", () => {
     expect(() => routerFromEnv({ FLOW_LLM_PROVIDER: "bogus" } as NodeJS.ProcessEnv)).toThrow(/bogus/);
+  });
+
+  it("builds a different provider per tier from FLOW_LLM_<TIER>_* env vars", () => {
+    const router = routerFromEnv({
+      FLOW_LLM_OPUS_PROVIDER: "anthropic",
+      FLOW_LLM_OPUS_API_KEY: "k",
+      FLOW_LLM_SONNET_PROVIDER: "openai",
+      FLOW_LLM_SONNET_BASE_URL: "http://x/v1",
+      FLOW_LLM_HAIKU_PROVIDER: "fake",
+    } as NodeJS.ProcessEnv);
+
+    const opus = router.resolve("opus");
+    expect(opus.provider).toBeInstanceOf(AnthropicProvider);
+    expect(opus.model).toBe("claude-opus-5");
+
+    const sonnet = router.resolve("sonnet");
+    expect(sonnet.provider).toBeInstanceOf(OpenAICompatibleProvider);
+    expect(sonnet.model).toBe("gpt-4o-mini");
+
+    const haiku = router.resolve("haiku");
+    expect(haiku.provider).toBeInstanceOf(FakeProvider);
+    expect(haiku.model).toBe("fake-haiku");
   });
 });

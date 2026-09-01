@@ -5,5 +5,6 @@ export {
   type OpenAICompatibleProviderOptions,
   type FetchLike,
 } from "./providers/openai-compatible.js";
+export { AnthropicProvider, type AnthropicProviderOptions } from "./providers/anthropic.js";
 export { ModelRouter } from "./router.js";
 export { routerFromEnv } from "./config.js";
