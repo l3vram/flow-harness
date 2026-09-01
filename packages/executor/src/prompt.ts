@@ -2,15 +2,31 @@ import type { Message } from "@flow/llm";
 import type { ExecTask } from "./types.js";
 
 const SYSTEM_PROMPT = `You are an implementation executor. You are given a task and optionally some relevant repository
-context. Produce the complete new contents of every file needed to accomplish the task. Output
-each file as a marker-delimited block, and nothing else:
+context. Accomplish the task by emitting one or more marker-delimited change blocks, and nothing
+else. Two block formats are available:
+
+To create a new file, or fully overwrite an existing one, use a FILE block with its full content:
 <<<FILE relative/path/from/root>>>
 the full, verbatim file content (any number of lines)
 <<<END>>>
-Repeat one block per file. After the last block you may add a single line:
+
+To modify part of an existing file, prefer an EDIT block instead:
+<<<EDIT relative/path/from/root>>>
+<<<SEARCH>>>
+exact text that currently exists in the file (may span lines)
+<<<REPLACE>>>
+new text to put in its place
+<<<END>>>
+
+Repeat one block per change; a file may receive multiple EDIT blocks, applied in order. After the
+last block you may add a single line:
 <<<REASON>>> one short sentence
-Every path MUST be relative to the project root, use forward slashes, and never contain "..".
-Do not wrap the output in JSON or code fences. Provide the FULL content of each file, not a diff.`;
+
+To modify an existing file, prefer an EDIT block; the SEARCH text must match the current file
+content exactly and be unique. To create a new file, use a FILE block with its full content. Every
+path MUST be relative and never contain "..". Do not wrap the output in JSON or code fences.
+Every path MUST be relative to the project root and use forward slashes. Provide the FULL content
+of each FILE block, not a diff.`;
 
 /**
  * Builds the two-message prompt sent to the model: a fixed system instruction plus a user

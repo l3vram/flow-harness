@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -51,5 +51,31 @@ describe("Executor", () => {
     );
 
     expect(result.verify.ok).toBe(false);
+  });
+
+  it("edits an existing file via an EDIT block", async () => {
+    writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
+    const text = [
+      "<<<EDIT hello.txt>>>",
+      "<<<SEARCH>>>",
+      "hi there",
+      "<<<REPLACE>>>",
+      "hi world",
+      "<<<END>>>",
+      "<<<REASON>>> edited it",
+    ].join("\n");
+    const router = routerWithResponse(text);
+    const executor = new Executor(router, {});
+
+    const result = await executor.run(
+      { id: "t2", instruction: "edit hello.txt" },
+      { targetDir: dir },
+    );
+
+    expect(result.taskId).toBe("t2");
+    expect(result.files).toEqual(["hello.txt"]);
+    expect(readFileSync(join(dir, "hello.txt"), "utf8")).toBe("hi world");
+    expect(result.reason).toBe("edited it");
+    expect(result.verify.ran).toBe(false);
   });
 });

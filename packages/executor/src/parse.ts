@@ -1,4 +1,4 @@
-import type { FileChange } from "./types.js";
+import type { Change } from "./types.js";
 
 /**
  * Returns false if `p` is empty, starts with `/`, contains a backslash, or has any `/`-split
@@ -17,35 +17,37 @@ export function isSafeRelativePath(p: string): boolean {
 }
 
 const FILE_START_RE = /^<<<FILE\s+(.+?)>>>\s*$/;
-const FILE_END_RE = /^<<<END>>>\s*$/;
+const EDIT_START_RE = /^<<<EDIT\s+(.+?)>>>\s*$/;
+const SEARCH_RE = /^<<<SEARCH>>>\s*$/;
+const REPLACE_RE = /^<<<REPLACE>>>\s*$/;
+const END_RE = /^<<<END>>>\s*$/;
 const REASON_RE = /^<<<REASON>>>\s?(.*)$/;
 
 /**
- * Parses the executor's raw model text into validated file changes. The model is instructed to
- * emit one marker-delimited block per file (`<<<FILE path>>>` ... `<<<END>>>`), which needs no
- * escaping of file content, followed by an optional `<<<REASON>>> ...` line. This avoids the
- * fragility of asking the model to produce valid JSON containing arbitrary multi-line content.
+ * Parses the executor's raw model text into validated changes. The model is instructed to emit
+ * one marker-delimited block per change — `<<<FILE path>>>` ... `<<<END>>>` to create/overwrite a
+ * file, or `<<<EDIT path>>>` / `<<<SEARCH>>>` / `<<<REPLACE>>>` / `<<<END>>>` to safely edit an
+ * existing file — which needs no escaping of file content, followed by an optional
+ * `<<<REASON>>> ...` line. This avoids the fragility of asking the model to produce valid JSON
+ * containing arbitrary multi-line content.
  */
-export function parseChanges(
-  text: string,
-  maxFiles = 50,
-): { files: FileChange[]; reason: string } {
+export function parseChanges(text: string, maxFiles = 50): { changes: Change[]; reason: string } {
   const lines = text.split("\n");
-  const files: FileChange[] = [];
+  const changes: Change[] = [];
   let reason = "";
 
   let i = 0;
   while (i < lines.length) {
     const line = lines[i] ?? "";
-    const startMatch = FILE_START_RE.exec(line);
-    if (startMatch) {
-      const path = (startMatch[1] ?? "").trim();
+    const fileStartMatch = FILE_START_RE.exec(line);
+    if (fileStartMatch) {
+      const path = (fileStartMatch[1] ?? "").trim();
       const contentLines: string[] = [];
       let j = i + 1;
       let closed = false;
       while (j < lines.length) {
         const candidate = lines[j] ?? "";
-        if (FILE_END_RE.test(candidate)) {
+        if (END_RE.test(candidate)) {
           closed = true;
           break;
         }
@@ -53,13 +55,65 @@ export function parseChanges(
         j++;
       }
       if (closed) {
-        files.push({ path, content: contentLines.join("\n") });
+        changes.push({ kind: "write", path, content: contentLines.join("\n") });
         i = j + 1;
         continue;
       } else {
         // Unterminated block at end of input: ignore this trailing partial block.
         break;
       }
+    }
+
+    const editStartMatch = EDIT_START_RE.exec(line);
+    if (editStartMatch) {
+      const path = (editStartMatch[1] ?? "").trim();
+      let j = i + 1;
+
+      const searchMarkerLine = lines[j] ?? "";
+      if (!SEARCH_RE.test(searchMarkerLine)) {
+        throw new Error(`malformed EDIT block for ${path}`);
+      }
+      j++;
+
+      const searchLines: string[] = [];
+      let foundReplace = false;
+      while (j < lines.length) {
+        const candidate = lines[j] ?? "";
+        if (REPLACE_RE.test(candidate)) {
+          foundReplace = true;
+          break;
+        }
+        searchLines.push(candidate);
+        j++;
+      }
+      if (!foundReplace) {
+        throw new Error(`malformed EDIT block for ${path}`);
+      }
+      j++;
+
+      const replaceLines: string[] = [];
+      let foundEnd = false;
+      while (j < lines.length) {
+        const candidate = lines[j] ?? "";
+        if (END_RE.test(candidate)) {
+          foundEnd = true;
+          break;
+        }
+        replaceLines.push(candidate);
+        j++;
+      }
+      if (!foundEnd) {
+        throw new Error(`malformed EDIT block for ${path}`);
+      }
+
+      changes.push({
+        kind: "edit",
+        path,
+        search: searchLines.join("\n"),
+        replace: replaceLines.join("\n"),
+      });
+      i = j + 1;
+      continue;
     }
 
     const reasonMatch = REASON_RE.exec(line);
@@ -70,17 +124,17 @@ export function parseChanges(
     i++;
   }
 
-  if (files.length === 0) {
+  if (changes.length === 0) {
     throw new Error("executor returned no file blocks");
   }
-  if (files.length > maxFiles) {
-    throw new Error(`too many files (${files.length} > ${maxFiles})`);
+  if (changes.length > maxFiles) {
+    throw new Error(`too many files (${changes.length} > ${maxFiles})`);
   }
-  for (const file of files) {
-    if (!isSafeRelativePath(file.path)) {
-      throw new Error(`unsafe path: ${file.path}`);
+  for (const change of changes) {
+    if (!isSafeRelativePath(change.path)) {
+      throw new Error(`unsafe path: ${change.path}`);
     }
   }
 
-  return { files, reason };
+  return { changes, reason };
 }

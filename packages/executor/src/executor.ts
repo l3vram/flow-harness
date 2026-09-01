@@ -19,8 +19,8 @@ export class Executor {
   async run(task: ExecTask, ctx: ExecContext): Promise<ExecResult> {
     const messages = buildExecutorMessages(task, ctx.context ?? "");
     const res = await this.router.complete({ tier: this.opts.tier ?? "sonnet", messages });
-    const { files, reason } = parseChanges(res.text, this.opts.maxFiles ?? 50);
-    const applied = applyChanges(ctx.targetDir, files);
+    const { changes, reason } = parseChanges(res.text, this.opts.maxFiles ?? 50);
+    const applied = applyChanges(ctx.targetDir, changes);
     const verify = runVerify(ctx.targetDir, this.opts.verifyCommand ?? []);
     return { taskId: task.id, files: applied, reason, verify };
   }

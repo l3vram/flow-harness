@@ -1,10 +1,22 @@
 import type { Tier } from "@flow/llm";
 
-/** One file the model wants written, with its full new content. */
-export interface FileChange {
+/** One file the model wants created or fully overwritten, with its full new content. */
+export interface WriteChange {
+  kind: "write";
   path: string;
   content: string;
 }
+
+/** One safe search/replace edit against an existing file's exact current content. */
+export interface EditChange {
+  kind: "edit";
+  path: string;
+  search: string;
+  replace: string;
+}
+
+/** A single unit of change the model wants applied to the filesystem. */
+export type Change = WriteChange | EditChange;
 
 /** A single unit of work handed to the executor. */
 export interface ExecTask {
