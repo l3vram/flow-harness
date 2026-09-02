@@ -76,6 +76,23 @@ export function routerFromEnv(env: NodeJS.ProcessEnv = process.env): ModelRouter
     const provider = makeProvider(kind, { apiKey, baseUrl, maxRetries });
     providers.set(tier, provider);
     profiles.push({ tier, provider: tier, model });
+
+    const fallbackKind = (env["FLOW_LLM_" + u + "_FALLBACK_PROVIDER"] || "").toLowerCase();
+    if (fallbackKind) {
+      const fallbackApiKey = env["FLOW_LLM_" + u + "_FALLBACK_API_KEY"] || undefined;
+      const fallbackBaseUrl = env["FLOW_LLM_" + u + "_FALLBACK_BASE_URL"] || undefined;
+      const fallbackModel =
+        env["FLOW_LLM_" + u + "_FALLBACK_MODEL"] || defaultModel(fallbackKind, tier);
+
+      const fallbackProvider = makeProvider(fallbackKind, {
+        apiKey: fallbackApiKey,
+        baseUrl: fallbackBaseUrl,
+        maxRetries,
+      });
+      const fallbackKey = tier + "-fallback";
+      providers.set(fallbackKey, fallbackProvider);
+      profiles.push({ tier, provider: fallbackKey, model: fallbackModel });
+    }
   }
 
   return new ModelRouter(providers, profiles);

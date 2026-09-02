@@ -175,16 +175,50 @@ A failed verify is fed back (error + current file contents) so the executor EDIT
 `maxRepairAttempts`. **Proven**: attempt 1 failed → the harness read the error and fixed itself →
 attempt 2 passed. Runs now converge. **121 tests total.**
 
+### v0.12–v0.14 — SDD planner + converge ✅ — *self-built*
+The harness builds its own planning brain (GitHub Spec Kit / Spec-Driven Development).
+- ✅ **`@flow/planner`** — objective → **spec** (requirements + acceptance + clarifications) → ordered
+  **task DAG** with per-task verify. **Self-built (CEO on Gemini).**
+- ✅ **v0.13** — wired into `flow-run`: objective → plan → **human gate** (exit 2; `acceptPlan:true` to
+  execute) → run. Per-task `verifyCommand` override in the executor.
+- ✅ **`@flow/converge`** — `converge(plan, outcomes)` → deterministic **done-vs-spec** report
+  (green/pending, complete, open clarifications). **Self-built.**
+
+### v0.15 — git worktree per run + PR gate ✅ — *self-built*
+- ✅ **`@flow/git`** — `spawnSync` wrapper (no shell): `createWorktree`, `commitAll`, `changedFiles`…
+  `flow-run "worktree": true` runs the whole thing on `flow/<runId>`, leaving the target's working
+  tree untouched — the human reviews the branch as a PR. **Proven**: an isolated run created a file on
+  its branch; master stayed clean.
+
+### v0.2.3 — retry/backoff ✅
+`fetchWithRetry` on 408/429/5xx (exponential backoff) across providers. **Proven**: rode through a Groq
+429 (TPM limit) and a Gemini 503 (overload) without failing the run.
+
+### v0.2.4 — automatic provider fallback ✅
+Each tier can declare a **fallback** provider/model (`FLOW_LLM_<TIER>_FALLBACK_*`). If the primary's
+`complete()` throws (saturation/outage after retries), `ModelRouter` auto-switches to the fallback —
+e.g. Gemini(CEO) → Mistral, or Groq(exec) → Mistral `codestral`. Backward compatible (no fallback env →
+one profile per tier, unchanged). **140 tests total, Docker-verified.**
+
+### memory home — lessons persist across runs ✅
+Lessons (the harness's cross-run memory) now live in a **stable** `FLOW_MEMORY_HOME` (default
+`~/.flow-harness/lessons.jsonl`), separate from per-run state under `FLOW_HOME`. A throwaway `FLOW_HOME`
+no longer discards what the harness has learned.
+
+### providers — Mistral in the pool ✅
+Mistral works plug-and-play via the OpenAI-compatible provider (`https://api.mistral.ai/v1`);
+`codestral-latest` is the code-tier model. Available as a primary or a fallback on any tier.
+
 ---
 
 ## What remains (in priority order)
 
 ### Next ⬜
-- **git worktree per run + PR gate** (Fase A part 2 — isolate runs, review a real PR).
-- **planner** (objective → task DAG; the CEO still can't decompose an objective into tasks).
-- QA engine + Playwright (browser evidence) · evaluation harness · controlled learning · provider
-  retry/backoff/fallback · MCP resources & apps · remote deployment. Each is its own package on the
-  spine; details per section in `PLAN.md`.
+- **`flow_plan` over MCP** (expose the SDD planner as an MCP tool; convergence report too).
+- **QA engine + Playwright** (browser evidence for UI tasks).
+- **evaluation harness** (score runs against acceptance) · **controlled learning** (promote lessons) ·
+  **graph memory + "escalate only what matters"** (Atlas-inspired) · **MCP resources & apps** ·
+  **remote deployment**. Each is its own package on the spine; details per section in `PLAN.md`.
 
 ---
 

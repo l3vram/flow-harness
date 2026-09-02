@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { LLMProvider } from "../src/index.js";
 import {
   AnthropicProvider,
   FakeProvider,
@@ -6,6 +7,14 @@ import {
   OpenAICompatibleProvider,
   routerFromEnv,
 } from "../src/index.js";
+
+/** A provider whose `complete` always rejects, used to exercise fallback behaviour. */
+class ThrowingProvider implements LLMProvider {
+  readonly name = "throwing";
+  async complete(): Promise<never> {
+    throw new Error("primary provider unavailable");
+  }
+}
 
 describe("ModelRouter", () => {
   it("throws when given no profiles", () => {
@@ -51,6 +60,43 @@ describe("ModelRouter", () => {
     const result = await router.complete({ tier: "sonnet", messages: [{ role: "user", content: "hi" }] });
     expect(result.text).toBe("[fake:fake-sonnet] hi");
     expect(result.model).toBe("fake-sonnet");
+  });
+
+  it("falls back to the second provider when the primary throws", async () => {
+    const throwing = new ThrowingProvider();
+    const fake = new FakeProvider();
+    const router = new ModelRouter(
+      new Map<string, LLMProvider>([
+        ["throwing", throwing],
+        ["fake", fake],
+      ]),
+      [
+        { tier: "sonnet", provider: "throwing", model: "primary-model" },
+        { tier: "sonnet", provider: "fake", model: "fallback-model" },
+      ],
+    );
+    expect(router.routesFor("sonnet")).toBe(2);
+    const result = await router.complete({ tier: "sonnet", messages: [{ role: "user", content: "hi" }] });
+    expect(result.text).toBe("[fake:fallback-model] hi");
+    expect(result.model).toBe("fallback-model");
+  });
+
+  it("does not use the fallback when the primary succeeds", async () => {
+    const fake = new FakeProvider();
+    const throwing = new ThrowingProvider();
+    const router = new ModelRouter(
+      new Map<string, LLMProvider>([
+        ["fake", fake],
+        ["throwing", throwing],
+      ]),
+      [
+        { tier: "sonnet", provider: "fake", model: "primary-model" },
+        { tier: "sonnet", provider: "throwing", model: "fallback-model" },
+      ],
+    );
+    const result = await router.complete({ tier: "sonnet", messages: [{ role: "user", content: "hi" }] });
+    expect(result.text).toBe("[fake:primary-model] hi");
+    expect(result.model).toBe("primary-model");
   });
 });
 
@@ -115,5 +161,23 @@ describe("routerFromEnv", () => {
     const haiku = router.resolve("haiku");
     expect(haiku.provider).toBeInstanceOf(FakeProvider);
     expect(haiku.model).toBe("fake-haiku");
+  });
+
+  it("builds a per-tier fallback chain from FLOW_LLM_<TIER>_FALLBACK_* env vars", async () => {
+    const router = routerFromEnv({
+      FLOW_LLM_SONNET_PROVIDER: "fake",
+      FLOW_LLM_SONNET_FALLBACK_PROVIDER: "openai",
+      FLOW_LLM_SONNET_FALLBACK_BASE_URL: "http://x/v1",
+      FLOW_LLM_SONNET_FALLBACK_MODEL: "m",
+    } as NodeJS.ProcessEnv);
+
+    expect(router.routesFor("sonnet")).toBe(2);
+    expect(router.routesFor("haiku")).toBe(1);
+
+    const primary = router.resolve("sonnet");
+    expect(primary.provider).toBeInstanceOf(FakeProvider);
+
+    const result = await router.complete({ tier: "sonnet", messages: [{ role: "user", content: "hi" }] });
+    expect(result.provider).toBe("fake");
   });
 });

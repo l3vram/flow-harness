@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { Runtime, type GateId, type State } from "@flow/core";
 import { Ceo } from "@flow/ceo";
@@ -30,6 +31,11 @@ async function main(): Promise<void> {
   }
 
   const base = process.env.FLOW_HOME ?? ".flow";
+  // Lessons are the harness's memory across runs. Keep them in a STABLE home, separate from
+  // per-run state (events, worktrees) under FLOW_HOME, so a throwaway FLOW_HOME never discards
+  // what the harness has learned. Override with FLOW_MEMORY_HOME.
+  const memoryHome = process.env.FLOW_MEMORY_HOME ?? join(homedir(), ".flow-harness");
+  const lessonsPath = join(memoryHome, "lessons.jsonl");
   const dir = join(base, "runs", config.runId);
   const runtime = new Runtime(dir);
   if (runtime.started()) {
@@ -88,7 +94,7 @@ async function main(): Promise<void> {
     runtime.recordGate(gate as GateId, "approved");
   }
 
-  const lessonStore = new MemoryStore(join(base, "lessons.jsonl"));
+  const lessonStore = new MemoryStore(lessonsPath);
   const contextEngine = config.contextRoot ? ContextEngine.index(config.contextRoot) : null;
   const advisor = (state: State): string => {
     const parts: string[] = [];
@@ -136,7 +142,7 @@ async function main(): Promise<void> {
   // Learn from this run: record one lesson so future runs can recall what was built.
   const greenTasks = report.tasks.filter((t) => t.status === "green").map((t) => t.id);
   const roles = [...new Set(taskList.map((t) => t.role))];
-  new MemoryStore(join(base, "lessons.jsonl")).add({
+  new MemoryStore(lessonsPath).add({
     id: config.runId,
     scope: "run",
     content: `${config.objective} — completed=${report.completed}; green: ${greenTasks.join(", ") || "none"}`,
