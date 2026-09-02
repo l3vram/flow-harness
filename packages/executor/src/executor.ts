@@ -21,7 +21,7 @@ export class Executor {
     const res = await this.router.complete({ tier: this.opts.tier ?? "sonnet", messages });
     const { changes, reason } = parseChanges(res.text, this.opts.maxFiles ?? 50);
     const applied = applyChanges(ctx.targetDir, changes);
-    const verify = runVerify(ctx.targetDir, this.opts.verifyCommand ?? []);
+    const verify = runVerify(ctx.targetDir, ctx.verifyCommand ?? this.opts.verifyCommand ?? []);
     return { taskId: task.id, files: applied, reason, verify };
   }
 }

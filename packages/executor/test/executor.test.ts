@@ -53,6 +53,20 @@ describe("Executor", () => {
     expect(result.verify.ok).toBe(false);
   });
 
+  it("ctx.verifyCommand overrides the constructor's verifyCommand", async () => {
+    const text = "<<<FILE hello.txt>>>\nhi\n<<<END>>>\n<<<REASON>>> done";
+    const router = routerWithResponse(text);
+    const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(0)"] });
+
+    const result = await executor.run(
+      { id: "t1", instruction: "write hello.txt" },
+      { targetDir: dir, verifyCommand: ["node", "-e", "process.exit(1)"] },
+    );
+
+    expect(result.verify.ran).toBe(true);
+    expect(result.verify.ok).toBe(false);
+  });
+
   it("edits an existing file via an EDIT block", async () => {
     writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
     const text = [

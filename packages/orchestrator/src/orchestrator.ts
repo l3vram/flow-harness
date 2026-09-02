@@ -74,14 +74,14 @@ export class Orchestrator {
         const maxTries = (this.opts.maxRepairAttempts ?? 2) + 1;
         let result = await this.executor.run(
           { id: taskId, instruction: spec.instruction },
-          { targetDir: this.opts.targetDir, context: baseContext },
+          { targetDir: this.opts.targetDir, context: baseContext, verifyCommand: spec.verify },
         );
         let tries = 1;
         while (!result.verify.ok && tries < maxTries) {
           const repair = this.repairContext(result.files, result.verify.output);
           result = await this.executor.run(
             { id: taskId, instruction: spec.instruction },
-            { targetDir: this.opts.targetDir, context: baseContext + "\n\n" + repair },
+            { targetDir: this.opts.targetDir, context: baseContext + "\n\n" + repair, verifyCommand: spec.verify },
           );
           tries++;
         }

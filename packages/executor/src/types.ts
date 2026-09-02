@@ -49,4 +49,5 @@ export interface ExecutorOptions {
 export interface ExecContext {
   targetDir: string;
   context?: string;
+  verifyCommand?: string[];
 }

@@ -190,4 +190,32 @@ describe("Orchestrator", () => {
     expect(report.outcomes.a?.status).toBe("blocked");
     expect(report.outcomes.a?.attempts).toBe(3);
   });
+
+  it("a per-task verify overrides the constructor's (empty) verifyCommand and blocks on failure", async () => {
+    const runtime = Runtime.init(runDir, "r7", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      [
+        "a",
+        {
+          id: "a",
+          role: "backend",
+          tier: "sonnet",
+          deps: [],
+          instruction: "do a",
+          verify: ["node", "-e", "process.exit(1)"],
+        },
+      ],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("blocked");
+    expect(report.outcomes.a?.verify.ok).toBe(false);
+  });
 });

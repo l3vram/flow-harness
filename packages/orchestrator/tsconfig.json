@@ -11,7 +11,8 @@
     { "path": "../llm" },
     { "path": "../context" },
     { "path": "../memory" },
-    { "path": "../review" }
+    { "path": "../review" },
+    { "path": "../planner" }
   ],
   "include": ["src/**/*"]
 }

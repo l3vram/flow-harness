@@ -10,6 +10,7 @@ export interface TaskSpec {
   tier: Tier;
   deps?: string[];
   instruction: string;
+  verify?: string[];
 }
 
 export interface OrchestratorOptions {
@@ -49,5 +50,7 @@ export interface RunConfig {
   maxSteps?: number;
   /** Human gates to pre-approve before the loop starts (e.g. ["A"] = the plan is approved). */
   approveGates?: string[];
-  tasks: TaskSpec[];
+  tasks?: TaskSpec[];
+  /** The human has reviewed the LLM-generated plan and approves executing it. */
+  acceptPlan?: boolean;
 }

@@ -7,6 +7,7 @@ import { Executor } from "@flow/executor";
 import { routerFromEnv } from "@flow/llm";
 import { MemoryStore, searchLessons } from "@flow/memory";
 import { ContextEngine } from "@flow/context";
+import { Planner } from "@flow/planner";
 import { Orchestrator } from "./orchestrator.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
@@ -37,8 +38,46 @@ async function main(): Promise<void> {
   }
   Runtime.init(dir, config.runId, config.objective);
 
+  const router = routerFromEnv();
+
+  // Resolve the task list: either hand-written in the config, or planned from the objective.
+  let taskList: TaskSpec[];
+  if (config.tasks !== undefined && config.tasks.length > 0) {
+    taskList = config.tasks;
+  } else if (config.objective) {
+    const planner = new Planner(router);
+    const plan = await planner.plan(config.objective, /* no repo context for v1 */ undefined);
+    console.error("=== SPEC ===");
+    console.error(JSON.stringify(plan.spec, null, 2));
+    console.error("=== TASKS ===");
+    console.error(JSON.stringify(plan.tasks, null, 2));
+    if (plan.spec.clarifications.length > 0 && config.acceptPlan !== true) {
+      console.error("=== CLARIFICATIONS (resolve, then re-run with acceptPlan:true) ===");
+      console.error(plan.spec.clarifications.map((c) => "- " + c).join("\n"));
+      process.exit(2);
+      return;
+    }
+    if (config.acceptPlan !== true) {
+      console.error('Plan ready. Review it, then re-run with "acceptPlan": true to execute.');
+      process.exit(2);
+      return;
+    }
+    taskList = plan.tasks.map((t) => ({
+      id: t.id,
+      role: t.role,
+      tier: t.tier as TaskSpec["tier"],
+      deps: t.deps,
+      instruction: t.instruction,
+      verify: t.verify,
+    }));
+  } else {
+    console.error("flow-run: config needs either tasks or an objective");
+    process.exit(1);
+    return;
+  }
+
   const specs = new Map<string, TaskSpec>();
-  for (const spec of config.tasks) {
+  for (const spec of taskList) {
     runtime.addTask(spec.id, spec.role, spec.tier, spec.deps ?? []);
     specs.set(spec.id, spec);
   }
@@ -48,7 +87,6 @@ async function main(): Promise<void> {
     runtime.recordGate(gate as GateId, "approved");
   }
 
-  const router = routerFromEnv();
   const lessonStore = new MemoryStore(join(base, "lessons.jsonl"));
   const contextEngine = config.contextRoot ? ContextEngine.index(config.contextRoot) : null;
   const advisor = (state: State): string => {
@@ -73,7 +111,7 @@ async function main(): Promise<void> {
 
   // Learn from this run: record one lesson so future runs can recall what was built.
   const greenTasks = report.tasks.filter((t) => t.status === "green").map((t) => t.id);
-  const roles = [...new Set(config.tasks.map((t) => t.role))];
+  const roles = [...new Set(taskList.map((t) => t.role))];
   new MemoryStore(join(base, "lessons.jsonl")).add({
     id: config.runId,
     scope: "run",

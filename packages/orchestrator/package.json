@@ -16,7 +16,8 @@
     "@flow/llm": "*",
     "@flow/context": "*",
     "@flow/memory": "*",
-    "@flow/review": "*"
+    "@flow/review": "*",
+    "@flow/planner": "*"
   },
   "files": [
     "dist"
