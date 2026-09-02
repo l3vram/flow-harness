@@ -143,6 +143,7 @@ stateDiagram-v2
 | `@flow/review` | Deterministic risk/review engine: `assessRisk` → level, review depth, model tier, human gate. **Self-built.** | — | ✅ v0.9 |
 | `@flow/planner` | Spec-Driven Development planner (GitHub Spec Kit): objective → spec (requirements + acceptance + clarifications) → ordered task DAG with per-task verify. **Self-built (CEO on Gemini).** Wired into `flow-run` (objective → plan → gate → execute). | llm | ✅ v0.12 |
 | `@flow/converge` | SDD Converge/Analyze: `converge(plan, outcomes)` → deterministic done-vs-spec report (green/pending, complete, open clarifications). **Self-built.** | planner | ✅ v0.14 |
+| `@flow/git` | Git worktree wrapper (spawnSync, no shell): createWorktree, commitAll, changedFiles… — isolates a run on its own branch. **Self-built (first try).** `flow-run "worktree": true` → the run's changes land on `flow/<runId>` for a PR, working tree untouched. | — | ✅ v0.15 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)
