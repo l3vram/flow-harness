@@ -11,6 +11,7 @@
     { "path": "packages/orchestrator" },
     { "path": "packages/memory" },
     { "path": "packages/review" },
-    { "path": "packages/planner" }
+    { "path": "packages/planner" },
+    { "path": "packages/converge" }
   ]
 }
