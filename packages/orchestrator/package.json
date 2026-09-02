@@ -17,7 +17,8 @@
     "@flow/context": "*",
     "@flow/memory": "*",
     "@flow/review": "*",
-    "@flow/planner": "*"
+    "@flow/planner": "*",
+    "@flow/git": "*"
   },
   "files": [
     "dist"

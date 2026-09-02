@@ -12,7 +12,8 @@
     { "path": "../context" },
     { "path": "../memory" },
     { "path": "../review" },
-    { "path": "../planner" }
+    { "path": "../planner" },
+    { "path": "../git" }
   ],
   "include": ["src/**/*"]
 }

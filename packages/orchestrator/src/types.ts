@@ -53,4 +53,6 @@ export interface RunConfig {
   tasks?: TaskSpec[];
   /** The human has reviewed the LLM-generated plan and approves executing it. */
   acceptPlan?: boolean;
+  /** Isolate the run in a git worktree/branch of targetDir (a PR gate) instead of its working tree. */
+  worktree?: boolean;
 }

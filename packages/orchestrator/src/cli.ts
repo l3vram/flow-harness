@@ -8,6 +8,7 @@ import { routerFromEnv } from "@flow/llm";
 import { MemoryStore, searchLessons } from "@flow/memory";
 import { ContextEngine } from "@flow/context";
 import { Planner } from "@flow/planner";
+import { isGitRepo, createWorktree, commitAll } from "@flow/git";
 import { Orchestrator } from "./orchestrator.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
@@ -99,15 +100,38 @@ async function main(): Promise<void> {
     }
     return parts.join("\n\n");
   };
+  // Optional: isolate the run in a git worktree/branch of targetDir, so it never touches
+  // the target's working tree — the human reviews the branch as a PR (a PR gate).
+  let effectiveTargetDir = config.targetDir;
+  let worktreeBranch: string | undefined;
+  let worktreeDir: string | undefined;
+  if (config.worktree === true && isGitRepo(config.targetDir)) {
+    worktreeBranch = `flow/${config.runId}`;
+    worktreeDir = join(base, "worktrees", config.runId);
+    createWorktree(config.targetDir, worktreeDir, worktreeBranch);
+    effectiveTargetDir = worktreeDir;
+    console.error(`Isolated run in worktree ${worktreeDir} on branch ${worktreeBranch}`);
+  }
+
   const ceo = new Ceo(runtime, router, { advisor });
   const executor = new Executor(router, { verifyCommand: config.verifyCommand ?? [] });
   const orchestrator = new Orchestrator(runtime, ceo, executor, specs, {
-    targetDir: config.targetDir,
+    targetDir: effectiveTargetDir,
     maxSteps: config.maxSteps,
     contextRoot: config.contextRoot,
   });
 
   const report = await orchestrator.run();
+
+  // If isolated, commit the changes on the run's branch for human review (the PR gate).
+  if (worktreeDir !== undefined && worktreeBranch !== undefined) {
+    const committed = commitAll(worktreeDir, `flow-run: ${config.objective}`);
+    console.error(
+      committed
+        ? `Committed on branch ${worktreeBranch} (worktree ${worktreeDir}) — review it / open a PR.`
+        : `No changes to commit on branch ${worktreeBranch}.`,
+    );
+  }
 
   // Learn from this run: record one lesson so future runs can recall what was built.
   const greenTasks = report.tasks.filter((t) => t.status === "green").map((t) => t.id);
