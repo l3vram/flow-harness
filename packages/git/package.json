@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "name": "@flow/git",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
+}

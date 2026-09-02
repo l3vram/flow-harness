@@ -12,6 +12,7 @@
     { "path": "packages/memory" },
     { "path": "packages/review" },
     { "path": "packages/planner" },
-    { "path": "packages/converge" }
+    { "path": "packages/converge" },
+    { "path": "packages/git" }
   ]
 }

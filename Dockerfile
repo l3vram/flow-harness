@@ -7,6 +7,8 @@
 # --- build: install workspace deps (with source present) and compile ---
 FROM node:22-alpine AS build
 WORKDIR /app
+# git: @flow/git wraps the git CLI (worktree isolation) and its tests create real repos.
+RUN apk add --no-cache git
 COPY package.json package-lock.json tsconfig.base.json tsconfig.json vitest.config.ts ./
 COPY packages ./packages
 RUN npm ci
@@ -19,6 +21,8 @@ CMD ["npm", "test"]
 # --- runtime: the `flow` CLI; run state persists on the /work volume ---
 FROM node:22-alpine AS runtime
 WORKDIR /app
+# git: the harness isolates runs in git worktrees (@flow/git) at runtime.
+RUN apk add --no-cache git
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
