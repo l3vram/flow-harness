@@ -141,7 +141,8 @@ stateDiagram-v2
 | `@flow/orchestrator` | The conductor: CEO → executor → runtime, with a **repair loop** (retry a failed verify by feeding the error back), **risk gating** (high-risk → human review), and lesson recording. `flow-run <config.json>`. | core, ceo, executor, llm, context, memory, review | ✅ v0.7 |
 | `@flow/memory` | Append-only lessons store + relevance search (reuses the context tokenizer) — the CEO's memory across runs. `flow-run` records one lesson per run. **Authored by the harness itself.** | context | ✅ v0.8 |
 | `@flow/review` | Deterministic risk/review engine: `assessRisk` → level, review depth, model tier, human gate. **Self-built.** | — | ✅ v0.9 |
-| `@flow/planner` | Spec-Driven Development planner (GitHub Spec Kit): objective → spec (requirements + acceptance + clarifications) → ordered task DAG with per-task verify. **Self-built (CEO on Gemini).** | llm | ✅ v0.12 |
+| `@flow/planner` | Spec-Driven Development planner (GitHub Spec Kit): objective → spec (requirements + acceptance + clarifications) → ordered task DAG with per-task verify. **Self-built (CEO on Gemini).** Wired into `flow-run` (objective → plan → gate → execute). | llm | ✅ v0.12 |
+| `@flow/converge` | SDD Converge/Analyze: `converge(plan, outcomes)` → deterministic done-vs-spec report (green/pending, complete, open clarifications). **Self-built.** | planner | ✅ v0.14 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)
