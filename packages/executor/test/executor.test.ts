@@ -96,6 +96,20 @@ describe("Executor", () => {
     expect(readFileSync(join(dir, "hello.txt"), "utf8")).toBe("hi there");
   });
 
+  it("turns a total provider failure into a failed verify (no throw) so the run is not aborted", async () => {
+    const router = { async complete() { throw new Error("all providers down"); } } as unknown as ModelRouter;
+    const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(0)"] });
+
+    const result = await executor.run(
+      { id: "t4", instruction: "do something" },
+      { targetDir: dir },
+    );
+
+    expect(result.files).toEqual([]);
+    expect(result.verify.ok).toBe(false);
+    expect(result.verify.output).toContain("llm request failed");
+  });
+
   it("edits an existing file via an EDIT block", async () => {
     writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
     const text = [

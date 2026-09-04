@@ -20,7 +20,18 @@ export class Executor {
 
   async run(task: ExecTask, ctx: ExecContext): Promise<ExecResult> {
     const messages = buildExecutorMessages(task, ctx.context ?? "");
-    const res = await this.router.complete({ tier: this.opts.tier ?? "sonnet", messages });
+
+    let res: { text: string };
+    try {
+      res = await this.router.complete({ tier: this.opts.tier ?? "sonnet", messages });
+    } catch (err) {
+      // Every provider for this tier (primary + any fallback) failed. Don't abort the whole run —
+      // report it as a failed verification so the task is blocked (after the repair budget) and the
+      // orchestrator moves on to its siblings, instead of the run crashing.
+      const message = err instanceof Error ? err.message : String(err);
+      return { taskId: task.id, files: [], reason: "", verify: { ran: true, ok: false, output: `llm request failed: ${message}` } };
+    }
+
     const { changes, reason } = parseChanges(res.text, this.opts.maxFiles ?? 50);
 
     let applied: string[];

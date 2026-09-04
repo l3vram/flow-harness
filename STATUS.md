@@ -229,14 +229,24 @@ The MCP surface can now **plan and check convergence**, not just add/execute tas
   text is absent) no longer aborts the run — it becomes a failed verification the orchestrator's repair loop
   feeds back (with the current file content), bounded by `maxRepairAttempts`. **+2 tests. 144 tests total.**
 
+### v0.17 — executor robustness ✅ — *self-built*
+Closed the two gaps v0.16 surfaced, authored by `flow-run` on the harness's own repo (single clean pass on the
+hardened executor, under human Gates A/B):
+- ✅ **atomic apply** — `applyChanges` validates + folds the whole batch into an in-memory copy and writes only
+  if all of it is valid, so a failure never leaves a partial (often non-compiling) tree; multiple edits to one
+  file compose in order.
+- ✅ **provider failure is not fatal** — a total provider failure (primary + fallback exhausted) becomes a failed
+  verification (task blocked after the repair budget), so the run continues instead of crashing.
+- ✅ **+3 tests (147 total).**
+
 ---
 
 ## What remains (in priority order)
 
 ### Next ⬜
-- **Executor robustness**: make `applyChanges` atomic (no partial writes when one change in a batch fails), and
-  treat a total provider failure (primary + fallback exhausted) as a *blocked task*, not a fatal run abort.
-- **QA engine + Playwright** (browser evidence for UI tasks).
+- **QA engine + Playwright** — the *exhaustive* verifier and the driver of the fix loop: black-box + white-box +
+  logic + UI/views across **web, Android and iOS**; detects errors, files them as **tickets**, and feeds them to
+  the **CEO** to decide fixes, which the executor repairs in a loop until green. (The next big increment.)
 - **evaluation harness** (score runs against acceptance) · **controlled learning** (promote lessons) ·
   **graph memory + "escalate only what matters"** (Atlas-inspired) · **MCP resources & apps** ·
   **remote deployment**. Each is its own package on the spine; details per section in `PLAN.md`.

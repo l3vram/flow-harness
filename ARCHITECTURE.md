@@ -187,9 +187,10 @@ The autonomous loop is closed and, increasingly, capable: `flow-run` drives obje
 the executor **edits real code**, a **repair loop** lets runs converge on failures, **provider
 fallback** rides through saturation, and each run can be **isolated on its own git worktree/branch**
 for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and the CEO on Claude in a
-multi-LLM run), and the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
-self-built). Next: **executor robustness** (atomic apply; a total provider failure blocks the task instead of
-aborting the run), then **QA + Playwright** (browser evidence) · an **evaluation harness** (score runs against
+multi-LLM run), the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
+self-built), and the **executor is hardened** (atomic apply; a total provider failure blocks the task instead of
+aborting the run — v0.17, self-built). Next: **QA + Playwright** — the exhaustive verifier across web/Android/iOS
+that files error tickets for a CEO-driven fix loop — then an **evaluation harness** (score runs against
 acceptance) · **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
 deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.

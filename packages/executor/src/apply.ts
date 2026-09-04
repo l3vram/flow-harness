@@ -24,10 +24,22 @@ function countOccurrences(haystack: string, needle: string): number {
  * `write` changes create or overwrite a file wholesale. `edit` changes require the target file to
  * already exist and require the `search` text to occur exactly once in its current content — this
  * is the safety rule: never guess which occurrence to replace.
+ *
+ * Application is ATOMIC: every change is validated and folded into an in-memory copy first (edits
+ * apply against the running copy, so multiple edits to one file compose in order), and nothing is
+ * written to disk unless the whole batch is valid. A failure therefore never leaves a partial batch.
  */
 export function applyChanges(targetDir: string, changes: Change[]): string[] {
   const base = resolve(targetDir);
-  const written: string[] = [];
+  // Pass 1 — validate and fold every change into an in-memory working copy. Writes nothing.
+  const pending = new Map<string, string>(); // abs path -> final content
+  const order: { abs: string; path: string }[] = [];
+  const note = (abs: string, path: string): void => {
+    if (!order.some((o) => o.abs === abs)) order.push({ abs, path });
+  };
+  const currentOf = (abs: string): string | undefined =>
+    pending.has(abs) ? pending.get(abs) : existsSync(abs) ? readFileSync(abs, "utf8") : undefined;
+
   for (const change of changes) {
     const abs = resolve(targetDir, change.path);
     if (abs !== base && !abs.startsWith(base + sep)) {
@@ -35,13 +47,13 @@ export function applyChanges(targetDir: string, changes: Change[]): string[] {
     }
 
     if (change.kind === "write") {
-      mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, change.content, "utf8");
+      pending.set(abs, change.content);
+      note(abs, change.path);
     } else {
-      if (!existsSync(abs)) {
+      const current = currentOf(abs);
+      if (current === undefined) {
         throw new Error(`cannot edit missing file: ${change.path}`);
       }
-      const current = readFileSync(abs, "utf8");
       const occurrences = countOccurrences(current, change.search);
       if (occurrences === 0) {
         throw new Error(`search text not found in ${change.path}`);
@@ -52,10 +64,15 @@ export function applyChanges(targetDir: string, changes: Change[]): string[] {
       const idx = current.indexOf(change.search);
       const updated =
         current.slice(0, idx) + change.replace + current.slice(idx + change.search.length);
-      writeFileSync(abs, updated, "utf8");
+      pending.set(abs, updated);
+      note(abs, change.path);
     }
-
-    written.push(change.path);
   }
-  return [...new Set(written)];
+
+  // Pass 2 — the whole batch validated; write it.
+  for (const { abs } of order) {
+    mkdirSync(dirname(abs), { recursive: true });
+    writeFileSync(abs, pending.get(abs) as string, "utf8");
+  }
+  return order.map((o) => o.path);
 }

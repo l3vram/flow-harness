@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -67,5 +67,27 @@ describe("applyChanges", () => {
       { kind: "edit" as const, path: "../escape.txt", search: "x", replace: "y" },
     ];
     expect(() => applyChanges(dir, changes)).toThrow("path escapes target: ../escape.txt");
+  });
+
+  it("is atomic: when a later change in the batch fails, none of the batch is written", () => {
+    // A valid write followed by an edit of a missing file: the batch must be rejected as a whole,
+    // and the valid write must NOT have landed on disk.
+    const changes = [
+      { kind: "write" as const, path: "new.txt", content: "hello" },
+      { kind: "edit" as const, path: "missing.txt", search: "x", replace: "y" },
+    ];
+    expect(() => applyChanges(dir, changes)).toThrow("cannot edit missing file: missing.txt");
+    expect(existsSync(join(dir, "new.txt"))).toBe(false);
+  });
+
+  it("applies multiple edits to the same file in order", () => {
+    writeFileSync(join(dir, "a.txt"), "one two", "utf8");
+    const changes = [
+      { kind: "edit" as const, path: "a.txt", search: "one", replace: "1" },
+      { kind: "edit" as const, path: "a.txt", search: "two", replace: "2" },
+    ];
+    const written = applyChanges(dir, changes);
+    expect(written).toEqual(["a.txt"]);
+    expect(readFileSync(join(dir, "a.txt"), "utf8")).toBe("1 2");
   });
 });

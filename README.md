@@ -34,7 +34,7 @@ strong model, execution on a cheap one — configured per tier.
   over MCP), so any MCP host can drive it.
 - **Built by itself** — packages like `@flow/memory` and `@flow/review` were authored by the
   harness running on its own repository, under human review.
-- **Everything runs in Docker.** 144 tests. The core is deterministic — no LLM in it.
+- **Everything runs in Docker.** 147 tests. The core is deterministic — no LLM in it.
 
 ## The one idea
 

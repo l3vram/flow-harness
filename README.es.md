@@ -35,7 +35,7 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   convergencia por MCP), para que cualquier host MCP lo maneje.
 - **Se construye a sí mismo** — paquetes como `@flow/memory` y `@flow/review` fueron escritos por el
   harness corriendo sobre su propio repositorio, bajo revisión humana.
-- **Todo corre en Docker.** 144 tests. El núcleo es determinista — sin LLM.
+- **Todo corre en Docker.** 147 tests. El núcleo es determinista — sin LLM.
 
 ## La idea única
 
