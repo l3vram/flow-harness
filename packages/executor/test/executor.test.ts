@@ -67,6 +67,35 @@ describe("Executor", () => {
     expect(result.verify.ok).toBe(false);
   });
 
+  it("turns an apply failure into a failed verify (no throw) so the repair loop can retry", async () => {
+    writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
+    const text = [
+      "<<<EDIT hello.txt>>>",
+      "<<<SEARCH>>>",
+      "text that is not present",
+      "<<<REPLACE>>>",
+      "whatever",
+      "<<<END>>>",
+      "<<<REASON>>> tried an edit",
+    ].join("\n");
+    const router = routerWithResponse(text);
+    const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(0)"] });
+
+    const result = await executor.run(
+      { id: "t3", instruction: "edit hello.txt" },
+      { targetDir: dir },
+    );
+
+    expect(result.files).toEqual([]);
+    expect(result.verify.ok).toBe(false);
+    expect(result.verify.output).toContain("apply failed");
+    expect(result.verify.output).toContain("search text not found");
+    // the current file content is surfaced so a repair retry can craft a matching edit
+    expect(result.verify.output).toContain("hi there");
+    // the file on disk is left untouched
+    expect(readFileSync(join(dir, "hello.txt"), "utf8")).toBe("hi there");
+  });
+
   it("edits an existing file via an EDIT block", async () => {
     writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
     const text = [

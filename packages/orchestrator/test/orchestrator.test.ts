@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -169,6 +169,32 @@ describe("Orchestrator", () => {
 
     expect(report.outcomes.a?.status).toBe("green");
     expect(report.outcomes.a?.attempts).toBe(2);
+  });
+
+  it("repair recovers from an apply failure: a bad EDIT no longer aborts the run — it is retried and a valid write passes", async () => {
+    const runtime = Runtime.init(runDir, "r5b", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    // The file exists, but attempt 1's EDIT searches for text that is absent → apply throws inside
+    // the executor. Before the fix this aborted the whole run; now it becomes a failed verify that
+    // the repair loop feeds back, and attempt 2's valid write passes.
+    writeFileSync(join(targetDir, "out.txt"), "placeholder", "utf8");
+    const badEdit = ["<<<EDIT out.txt>>>", "<<<SEARCH>>>", "text that is absent", "<<<REPLACE>>>", "GOOD", "<<<END>>>"].join("\n");
+    const goodWrite = "<<<FILE out.txt>>>\nGOOD\n<<<END>>>";
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(scriptedExecRouter([badEdit, goodWrite]), { verifyCommand: verifyGood });
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.a?.attempts).toBe(2);
+    expect(readFileSync(join(targetDir, "out.txt"), "utf8").trim()).toBe("GOOD");
   });
 
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
