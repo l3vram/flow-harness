@@ -209,6 +209,13 @@ no longer discards what the harness has learned.
 Mistral works plug-and-play via the OpenAI-compatible provider (`https://api.mistral.ai/v1`);
 `codestral-latest` is the code-tier model. Available as a primary or a fallback on any tier.
 
+### providers — OpenRouter in the pool ✅
+OpenRouter is plug-and-play via the OpenAI-compatible provider (`https://openrouter.ai/api/v1`),
+wired as an **execution-tier fallback** (`FLOW_LLM_SONNET_FALLBACK_*` / `FLOW_LLM_HAIKU_FALLBACK_*`) —
+an overflow "extra pair of hands" for heavy parallel runs. Its `:free` models are slow, so it stays a
+backup, never a primary. Keys live in a gitignored `.env` (template: `.env.example`); `docker-compose`
+passes the fallback vars through to the `run`/`ceo`/`exec` services via a shared YAML anchor.
+
 ---
 
 ## What remains (in priority order)

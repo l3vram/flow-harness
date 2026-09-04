@@ -21,7 +21,9 @@ strong model, execution on a cheap one — configured per tier.
   verifies it, the runtime advances waves, all under human gates. Proven with real inference.
 - **Any inference, per role** — each tier (`haiku`/`sonnet`/`opus`) maps to its own provider/model
   via env: e.g. the CEO on Anthropic or Gemini, execution on Groq. Providers are zero-dependency
-  (OpenAI-compatible + Anthropic Messages API) over the global `fetch`.
+  (OpenAI-compatible + Anthropic Messages API) over the global `fetch`. A tier can declare an
+  automatic **fallback** (e.g. OpenRouter) that the router switches to when the primary saturates —
+  overflow capacity for heavy parallel runs, with retry/backoff underneath.
 - **Edits real code** — a safe search/replace editor (the search text must match exactly once,
   paths confined to the target dir), not just whole new files.
 - **A brain that uses its pieces** — the CEO decides with recalled **lessons** (memory) and repo
@@ -31,7 +33,7 @@ strong model, execution on a cheap one — configured per tier.
   (`flow_*` tools incl. `flow_execute`), so any MCP host can drive it.
 - **Built by itself** — packages like `@flow/memory` and `@flow/review` were authored by the
   harness running on its own repository, under human review.
-- **Everything runs in Docker.** 119 tests. The core is deterministic — no LLM in it.
+- **Everything runs in Docker.** 140 tests. The core is deterministic — no LLM in it.
 
 ## The one idea
 
@@ -57,6 +59,9 @@ architecture decision records.
 | `@flow/orchestrator` | The conductor: CEO → executor → runtime, with risk gating and lesson recording (`flow-run`) |
 | `@flow/memory` | Append-only lessons store + relevance search |
 | `@flow/review` | Deterministic risk/review engine |
+| `@flow/planner` | Spec-Driven Development planner: objective → spec → ordered task DAG with per-task verify |
+| `@flow/converge` | Done-vs-spec convergence report (green/pending, complete, open clarifications) |
+| `@flow/git` | Git worktree per run + PR gate — isolates a run on its own branch, working tree untouched |
 
 ## Quickstart (Docker)
 
@@ -86,10 +91,17 @@ FLOW_LLM_OPUS_API_KEY=...        FLOW_LLM_OPUS_MODEL=gemini-2.5-pro
 FLOW_LLM_SONNET_PROVIDER=openai
 FLOW_LLM_SONNET_BASE_URL=https://api.groq.com/openai/v1
 FLOW_LLM_SONNET_API_KEY=...      FLOW_LLM_SONNET_MODEL=openai/gpt-oss-120b
+
+# optional per-tier fallback — overflow when the primary saturates (OpenRouter shown;
+# OpenAI-compatible, its :free models are slow but a fine extra pair of hands)
+FLOW_LLM_SONNET_FALLBACK_PROVIDER=openai
+FLOW_LLM_SONNET_FALLBACK_BASE_URL=https://openrouter.ai/api/v1
+FLOW_LLM_SONNET_FALLBACK_API_KEY=sk-or-v1-...   FLOW_LLM_SONNET_FALLBACK_MODEL=deepseek/deepseek-chat-v3-0324:free
 ```
 
 With no config it defaults to a deterministic offline fake provider, so tests and dry runs need no
-API key. An autonomous run is a JSON config driven by `flow-run` (see
+API key. Keys live in a gitignored `.env` (copy [`.env.example`](.env.example)); `docker compose`
+loads it automatically. An autonomous run is a JSON config driven by `flow-run` (see
 [`examples/run.example.json`](examples/run.example.json)).
 
 ## How it was built

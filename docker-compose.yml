@@ -1,5 +1,18 @@
 name: flow-harness
 
+# Execution-tier fallback (e.g. OpenRouter overflow) passed through to every service
+# that calls an LLM. Values come from .env / the shell; empty by default, so a tier
+# with no fallback configured behaves exactly as before.
+x-llm-fallback-env: &llm-fallback-env
+  FLOW_LLM_SONNET_FALLBACK_PROVIDER: ${FLOW_LLM_SONNET_FALLBACK_PROVIDER:-}
+  FLOW_LLM_SONNET_FALLBACK_BASE_URL: ${FLOW_LLM_SONNET_FALLBACK_BASE_URL:-}
+  FLOW_LLM_SONNET_FALLBACK_API_KEY: ${FLOW_LLM_SONNET_FALLBACK_API_KEY:-}
+  FLOW_LLM_SONNET_FALLBACK_MODEL: ${FLOW_LLM_SONNET_FALLBACK_MODEL:-}
+  FLOW_LLM_HAIKU_FALLBACK_PROVIDER: ${FLOW_LLM_HAIKU_FALLBACK_PROVIDER:-}
+  FLOW_LLM_HAIKU_FALLBACK_BASE_URL: ${FLOW_LLM_HAIKU_FALLBACK_BASE_URL:-}
+  FLOW_LLM_HAIKU_FALLBACK_API_KEY: ${FLOW_LLM_HAIKU_FALLBACK_API_KEY:-}
+  FLOW_LLM_HAIKU_FALLBACK_MODEL: ${FLOW_LLM_HAIKU_FALLBACK_MODEL:-}
+
 services:
   # Run the full suite in a clean, freshly built image.
   #   docker compose run --rm test
@@ -69,6 +82,7 @@ services:
       FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
       FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
       FLOW_CEO_AUTO_APPLY: ${FLOW_CEO_AUTO_APPLY:-}
+      <<: *llm-fallback-env
     volumes:
       - flow-state:/work
 
@@ -117,6 +131,7 @@ services:
       FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
       FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
       FLOW_EXEC_VERIFY: ${FLOW_EXEC_VERIFY:-}
+      <<: *llm-fallback-env
     volumes:
       - exec-work:/work
 
@@ -137,6 +152,7 @@ services:
       FLOW_LLM_API_KEY: ${FLOW_LLM_API_KEY:-}
       FLOW_LLM_MODEL: ${FLOW_LLM_MODEL:-}
       FLOW_LLM_TIER: ${FLOW_LLM_TIER:-sonnet}
+      <<: *llm-fallback-env
     volumes:
       - flow-state:/work
 

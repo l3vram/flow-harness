@@ -133,7 +133,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `@flow/core` | Event-sourced runtime: event log, projection, Kahn scheduler, state machine + circuit breaker, ledger, gates. **No LLM.** | — | ✅ v0.1 |
 | `@flow/cli` | The `flow` binary; a drop-in for `flow.sh`. | core | ✅ v0.1 |
-| `@flow/mcp-server` | MCP server exposing 10 high-level `flow_*` tools; any host can drive a run. | core, MCP SDK | ✅ v0.4 |
+| `@flow/mcp-server` | MCP server exposing 11 high-level `flow_*` tools (incl. `flow_execute`); any host can drive a run. | core, MCP SDK | ✅ v0.4 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `AnthropicProvider`, `ModelRouter`, `routerFromEnv`. Per-tier provider/model, retry/backoff, and **automatic fallback** (a tier's primary fails → auto-switch to its backup). Zero deps. | — | ✅ v0.2 / v0.2.4 |
 | `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
@@ -164,7 +164,9 @@ Extend along the seams; keep the invariants.
 
 - **Add an inference backend** → a new `LLMProvider` in `packages/llm/src/providers/`, wired in
   `routerFromEnv`. Most backends already work through `OpenAICompatibleProvider` (set
-  `FLOW_LLM_BASE_URL`); only a genuinely different API needs a new class.
+  `FLOW_LLM_BASE_URL`) — OpenRouter, Groq, Together, Mistral, vLLM, LM Studio and Ollama all plug in
+  as-is; only a genuinely different API needs a new class. Declare one as a per-tier
+  `FLOW_LLM_<TIER>_FALLBACK_*` for automatic overflow when the primary saturates.
 - **Add an orchestration capability** → a new event type in `@flow/core` (`events/types.ts`),
   handled in the projector (`projection/project.ts`) and emitted by a `Runtime` method. Never
   mutate `state.json` directly.
@@ -180,12 +182,14 @@ criteria (build + tests in Docker), not by an agent's say-so.
 
 ## Where this is going
 
-The autonomous loop is closed and, increasingly, capable: `flow-run` drives CEO → executor →
-runtime end to end, the CEO reasons with **memory + context**, the executor **edits real code**, and
-a **repair loop** lets runs converge on failures — all proven against real backends (Groq, and the
-CEO on Claude in a multi-LLM run). Next: **git worktree per run + a PR gate**, then a **planner**
-(objective → task DAG). Later: QA + Playwright (browser evidence) · evaluation harness · controlled
-learning · MCP resources & apps · remote deployment. The end state: point the harness at its own repository and
-let it build its next increments — which only works because the spine beneath it is
-deterministic, resumable and auditable. Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real
-plan).
+The autonomous loop is closed and, increasingly, capable: `flow-run` drives objective → **planner**
+(spec + task DAG) → human gate → CEO → executor → runtime, the CEO reasons with **memory + context**,
+the executor **edits real code**, a **repair loop** lets runs converge on failures, **provider
+fallback** rides through saturation, and each run can be **isolated on its own git worktree/branch**
+for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and the CEO on Claude in a
+multi-LLM run). Next: expose the **planner over MCP** (`flow_plan` + the convergence report), then
+**QA + Playwright** (browser evidence) · an **evaluation harness** (score runs against acceptance) ·
+**controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
+deployment. The end state: point the harness at its own repository and let it build its next
+increments — which only works because the spine beneath it is deterministic, resumable and auditable.
+Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real plan).

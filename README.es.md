@@ -22,7 +22,9 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   inferencia real.
 - **Cualquier inferencia, por rol** — cada tier (`haiku`/`sonnet`/`opus`) mapea a su propio
   provider/modelo vía env: p. ej. el CEO en Anthropic o Gemini, la ejecución en Groq. Los providers
-  son cero-dependencias (OpenAI-compatible + Anthropic Messages API) sobre el `fetch` global.
+  son cero-dependencias (OpenAI-compatible + Anthropic Messages API) sobre el `fetch` global. Un tier
+  puede declarar un **fallback** automático (p. ej. OpenRouter) al que el router cambia cuando el
+  primario se satura — capacidad de desahogo para runs con mucha paralelización, con retry/backoff debajo.
 - **Edita código real** — un editor search/replace seguro (el texto buscado debe coincidir
   exactamente una vez, rutas confinadas al directorio destino), no solo ficheros nuevos completos.
 - **Un cerebro que usa sus piezas** — el CEO decide con **lecciones** recuperadas (memoria) y
@@ -32,7 +34,7 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   (herramientas `flow_*`, incluida `flow_execute`), para que cualquier host MCP lo maneje.
 - **Se construye a sí mismo** — paquetes como `@flow/memory` y `@flow/review` fueron escritos por el
   harness corriendo sobre su propio repositorio, bajo revisión humana.
-- **Todo corre en Docker.** 119 tests. El núcleo es determinista — sin LLM.
+- **Todo corre en Docker.** 140 tests. El núcleo es determinista — sin LLM.
 
 ## La idea única
 
@@ -58,6 +60,9 @@ registros de decisiones de arquitectura (ADRs).
 | `@flow/orchestrator` | El conductor: CEO → executor → runtime, con gate de riesgo y registro de lecciones (`flow-run`) |
 | `@flow/memory` | Store de lecciones append-only + búsqueda por relevancia |
 | `@flow/review` | Motor determinista de riesgo/revisión |
+| `@flow/planner` | Planner Spec-Driven Development: objetivo → spec → DAG ordenado de tareas con verify por tarea |
+| `@flow/converge` | Reporte de convergencia done-vs-spec (green/pending, completo, clarificaciones abiertas) |
+| `@flow/git` | Worktree de git por run + gate de PR — aísla el run en su propia rama, working tree intacto |
 
 ## Inicio rápido (Docker)
 
@@ -87,11 +92,18 @@ FLOW_LLM_OPUS_API_KEY=...        FLOW_LLM_OPUS_MODEL=gemini-2.5-pro
 FLOW_LLM_SONNET_PROVIDER=openai
 FLOW_LLM_SONNET_BASE_URL=https://api.groq.com/openai/v1
 FLOW_LLM_SONNET_API_KEY=...      FLOW_LLM_SONNET_MODEL=openai/gpt-oss-120b
+
+# fallback opcional por tier — desahogo cuando el primario se satura (OpenRouter mostrado;
+# OpenAI-compatible, sus modelos :free son lentos pero un buen par de manos extra)
+FLOW_LLM_SONNET_FALLBACK_PROVIDER=openai
+FLOW_LLM_SONNET_FALLBACK_BASE_URL=https://openrouter.ai/api/v1
+FLOW_LLM_SONNET_FALLBACK_API_KEY=sk-or-v1-...   FLOW_LLM_SONNET_FALLBACK_MODEL=deepseek/deepseek-chat-v3-0324:free
 ```
 
 Sin configuración, usa por defecto un provider fake determinista y offline, así que los tests y las
-pruebas en seco no necesitan API key. Un run autónomo es un config JSON manejado por `flow-run` (ver
-[`examples/run.example.json`](examples/run.example.json)).
+pruebas en seco no necesitan API key. Las claves viven en un `.env` gitignoreado (copia
+[`.env.example`](.env.example)); `docker compose` lo carga automáticamente. Un run autónomo es un
+config JSON manejado por `flow-run` (ver [`examples/run.example.json`](examples/run.example.json)).
 
 ## Cómo se construyó
 

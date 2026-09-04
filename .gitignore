@@ -5,3 +5,8 @@ dist/
 coverage/
 .DS_Store
 *.log
+
+# Local secrets & provider overrides — never commit real API keys.
+.env
+.env.*
+!.env.example
