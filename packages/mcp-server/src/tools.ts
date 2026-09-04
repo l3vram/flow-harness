@@ -2,6 +2,8 @@ import { join } from "node:path";
 import { Runtime, isStatus, type GateId, type Tier } from "@flow/core";
 import { Executor } from "@flow/executor";
 import { routerFromEnv, type ModelRouter } from "@flow/llm";
+import { Planner, type Plan } from "@flow/planner";
+import { converge } from "@flow/converge";
 
 // The tool layer. Each tool is a plain object with a JSON-Schema input and a pure-ish handler
 // that operates on a Runtime. Keeping the handlers here (independent of the MCP SDK) makes them
@@ -239,6 +241,52 @@ export const tools: ToolDef[] = [
       const ok = result.verify.ok;
       rt.setStatus(taskId, ok ? "green" : "blocked", ok ? "" : "verify failed");
       return { taskId, status: ok ? "green" : "blocked", files: result.files, verify: result.verify, reason: result.reason };
+    },
+  },
+  {
+    name: "flow_spec",
+    description:
+      "Run the Spec-Driven Development planner: turn an objective into a spec (requirements, " +
+      "acceptance, clarifications) and an ordered task DAG. Requires a real LLM backend via FLOW_LLM_* env.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        objective: { type: "string", description: "What to build" },
+        context: { type: "string", description: "Optional repo/background context" },
+        tier: { type: "string", description: "Model tier for planning (default opus)" },
+      },
+      required: ["objective"],
+      additionalProperties: false,
+    },
+    handler: async (ctx, args) => {
+      const objective = reqStr(args, "objective");
+      const context = optStr(args, "context");
+      const tier = optStr(args, "tier");
+      const router = ctx.router ?? routerFromEnv();
+      const planner = new Planner(router, tier ? { tier } : undefined);
+      return await planner.plan(objective, context);
+    },
+  },
+  {
+    name: "flow_converge",
+    description:
+      "Deterministic done-vs-spec convergence report: given a plan and a map of task outcomes, " +
+      "report which tasks are green, which pending, and whether the plan is complete. Offline (no LLM).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plan: { type: "object", description: "A Plan { spec, approach, tasks }" },
+        outcomes: { type: "object", description: "Map of taskId -> outcome string ('green' counts as done)" },
+      },
+      required: ["plan", "outcomes"],
+      additionalProperties: false,
+    },
+    handler: (_ctx, args) => {
+      const plan = args.plan;
+      const outcomes = args.outcomes;
+      if (typeof plan !== "object" || plan === null) throw new Error("'plan' (object) is required");
+      if (typeof outcomes !== "object" || outcomes === null) throw new Error("'outcomes' (object) is required");
+      return converge(plan as Plan, outcomes as Record<string, string>);
     },
   },
 ];

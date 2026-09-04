@@ -31,10 +31,11 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   **contexto** del repo; un **motor de riesgo** manda los cambios de alto riesgo a revisión humana.
 - **Aprende** — cada run graba una lección; runs posteriores la recuerdan.
 - **Dos interfaces** — una CLI `flow` (drop-in del `flow.sh` original) y un **servidor MCP**
-  (herramientas `flow_*`, incluida `flow_execute`), para que cualquier host MCP lo maneje.
+  (herramientas `flow_*`, incluida `flow_execute`, más `flow_spec`/`flow_converge` — planificar y medir
+  convergencia por MCP), para que cualquier host MCP lo maneje.
 - **Se construye a sí mismo** — paquetes como `@flow/memory` y `@flow/review` fueron escritos por el
   harness corriendo sobre su propio repositorio, bajo revisión humana.
-- **Todo corre en Docker.** 140 tests. El núcleo es determinista — sin LLM.
+- **Todo corre en Docker.** 144 tests. El núcleo es determinista — sin LLM.
 
 ## La idea única
 

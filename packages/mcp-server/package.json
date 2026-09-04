@@ -10,9 +10,11 @@
     "flow-mcp": "dist/stdio.js"
   },
   "dependencies": {
+    "@flow/converge": "*",
     "@flow/core": "*",
     "@flow/executor": "*",
     "@flow/llm": "*",
+    "@flow/planner": "*",
     "@modelcontextprotocol/sdk": "^1.12.0"
   },
   "files": [

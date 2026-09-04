@@ -216,12 +216,26 @@ an overflow "extra pair of hands" for heavy parallel runs. Its `:free` models ar
 backup, never a primary. Keys live in a gitignored `.env` (template: `.env.example`); `docker-compose`
 passes the fallback vars through to the `run`/`ceo`/`exec` services via a shared YAML anchor.
 
+### v0.16 — planner + convergence over MCP ✅ — *self-built*
+The MCP surface can now **plan and check convergence**, not just add/execute tasks.
+- ✅ **`flow_spec`** — runs the SDD planner (`@flow/planner`) over MCP: objective (+ optional context/tier) →
+  spec + ordered task DAG. Needs a real LLM backend.
+- ✅ **`flow_converge`** — deterministic done-vs-spec report (`@flow/converge`) from a plan + task outcomes.
+  Offline. (The pre-existing `flow_plan` tool computes *wave layering* and is unchanged; these are new names,
+  deliberately, to avoid a collision.) **13 MCP tools total.**
+- ✅ **Self-built**: authored by `flow-run` on the harness's own repo (CEO on Gemini, executor on Groq) in a
+  single clean pass, under human Gates A/B. **+2 tests.**
+- ✅ **Enabling fix — executor repair on apply failure**: an `applyChanges` failure (e.g. an EDIT whose search
+  text is absent) no longer aborts the run — it becomes a failed verification the orchestrator's repair loop
+  feeds back (with the current file content), bounded by `maxRepairAttempts`. **+2 tests. 144 tests total.**
+
 ---
 
 ## What remains (in priority order)
 
 ### Next ⬜
-- **`flow_plan` over MCP** (expose the SDD planner as an MCP tool; convergence report too).
+- **Executor robustness**: make `applyChanges` atomic (no partial writes when one change in a batch fails), and
+  treat a total provider failure (primary + fallback exhausted) as a *blocked task*, not a fatal run abort.
 - **QA engine + Playwright** (browser evidence for UI tasks).
 - **evaluation harness** (score runs against acceptance) · **controlled learning** (promote lessons) ·
   **graph memory + "escalate only what matters"** (Atlas-inspired) · **MCP resources & apps** ·

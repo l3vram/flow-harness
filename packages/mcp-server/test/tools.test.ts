@@ -51,6 +51,34 @@ describe("mcp tool handlers", () => {
     expect(() => call("flow_ready", { runId: "ghost" })).toThrow(/run not found/);
   });
 
+  it("flow_spec runs the planner and returns the parsed plan", async () => {
+    const planJson = JSON.stringify({
+      spec: { objective: "Build X", requirements: [], acceptance: ["works"] },
+      approach: "",
+      tasks: [{ id: "t1", role: "backend", tier: "sonnet", deps: [], instruction: "do it" }],
+    });
+    const router = { async complete() { return { text: planJson }; } } as unknown as ModelRouter;
+    const res = (await getTool("flow_spec").handler({ baseDir: ctx.baseDir, router }, { objective: "Build X" })) as { spec: { objective: string }; tasks: unknown[] };
+    expect(res.spec.objective).toBe("Build X");
+    expect(res.tasks).toHaveLength(1);
+  });
+
+  it("flow_converge reports done vs pending", () => {
+    const plan = {
+      spec: { objective: "O", requirements: [], acceptance: [], clarifications: [] },
+      approach: "",
+      tasks: [
+        { id: "t1", role: "backend", tier: "sonnet", deps: [], instruction: "" },
+        { id: "t2", role: "backend", tier: "sonnet", deps: [], instruction: "" },
+      ],
+    };
+    const res = getTool("flow_converge").handler(ctx, { plan, outcomes: { t1: "green", t2: "blocked" } }) as { done: string[]; pending: string[]; complete: boolean; summary: string };
+    expect(res.done).toEqual(["t1"]);
+    expect(res.pending).toEqual(["t2"]);
+    expect(res.complete).toBe(false);
+    expect(res.summary).toContain("1/2 green");
+  });
+
   describe("flow_execute", () => {
     let targetDir: string;
     let router: ModelRouter;

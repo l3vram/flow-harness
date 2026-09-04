@@ -133,7 +133,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `@flow/core` | Event-sourced runtime: event log, projection, Kahn scheduler, state machine + circuit breaker, ledger, gates. **No LLM.** | — | ✅ v0.1 |
 | `@flow/cli` | The `flow` binary; a drop-in for `flow.sh`. | core | ✅ v0.1 |
-| `@flow/mcp-server` | MCP server exposing 11 high-level `flow_*` tools (incl. `flow_execute`); any host can drive a run. | core, MCP SDK | ✅ v0.4 |
+| `@flow/mcp-server` | MCP server exposing 13 high-level `flow_*` tools (incl. `flow_execute`, and `flow_spec`/`flow_converge` — the SDD planner + convergence over MCP); any host can drive a run. | core, MCP SDK | ✅ v0.4 / v0.16 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `AnthropicProvider`, `ModelRouter`, `routerFromEnv`. Per-tier provider/model, retry/backoff, and **automatic fallback** (a tier's primary fails → auto-switch to its backup). Zero deps. | — | ✅ v0.2 / v0.2.4 |
 | `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
@@ -187,9 +187,10 @@ The autonomous loop is closed and, increasingly, capable: `flow-run` drives obje
 the executor **edits real code**, a **repair loop** lets runs converge on failures, **provider
 fallback** rides through saturation, and each run can be **isolated on its own git worktree/branch**
 for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and the CEO on Claude in a
-multi-LLM run). Next: expose the **planner over MCP** (`flow_plan` + the convergence report), then
-**QA + Playwright** (browser evidence) · an **evaluation harness** (score runs against acceptance) ·
-**controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
+multi-LLM run), and the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
+self-built). Next: **executor robustness** (atomic apply; a total provider failure blocks the task instead of
+aborting the run), then **QA + Playwright** (browser evidence) · an **evaluation harness** (score runs against
+acceptance) · **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
 deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.
 Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real plan).
