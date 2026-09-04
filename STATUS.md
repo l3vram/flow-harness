@@ -241,15 +241,25 @@ hardened executor, under human Gates A/B):
 
 ---
 
-## What remains (in priority order)
+## What remains
 
-### Next ⬜
-- **QA engine + Playwright** — the *exhaustive* verifier and the driver of the fix loop: black-box + white-box +
-  logic + UI/views across **web, Android and iOS**; detects errors, files them as **tickets**, and feeds them to
-  the **CEO** to decide fixes, which the executor repairs in a loop until green. (The next big increment.)
-- **evaluation harness** (score runs against acceptance) · **controlled learning** (promote lessons) ·
-  **graph memory + "escalate only what matters"** (Atlas-inspired) · **MCP resources & apps** ·
-  **remote deployment**. Each is its own package on the spine; details per section in `PLAN.md`.
+The full, prioritized execution plan now lives in **[`plans/ROADMAP.md`](plans/ROADMAP.md)** — 17
+capabilities in dependency order, each tagged done / partial / not-started: from a *verifiable factory*
+(QA + evidence + requirement→verification graph + strong convergence) through autonomy (dynamic
+replanning, research, evaluation, repair→replan), real learning (structured memory, controlled learning,
+knowledge graph), security (capabilities, risk 2.0, sandboxing), and productization (full PR workflow,
+deployment verification, observability, remote execution).
+
+**The project's headline metric** is one repeated end-to-end test, not a package count: the harness builds
+a web app from a spec — research → plan → implement → test → launch → Playwright the flows → detect+repair →
+verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
+requirement is unverified. Passing that on several distinct projects is the bar.
+
+### Next ⬜ — Priority 0: the QA Engine
+The exhaustive verifier and the driver of the fix loop: unit / integration / API / E2E, **Playwright** for
+web (Android/iOS views later), automatic **evidence** (screenshots, traces, console, network); errors filed
+as **tickets** fed to the **CEO** to drive a repair loop until green. Then: evidence → requirement→verification
+graph → strong convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
 
 ---
 

@@ -194,4 +194,6 @@ that files error tickets for a CEO-driven fix loop — then an **evaluation harn
 acceptance) · **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
 deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.
-Full roadmap in [`PLAN.md`](PLAN.md) (its §56 is the real plan).
+The prioritized execution plan (17 capabilities, dependency-ordered, status-tagged) and the project's
+headline metric — an autonomous, evidence-verified web-app build repeated across specs — live in
+[`plans/ROADMAP.md`](plans/ROADMAP.md); [`PLAN.md`](PLAN.md) remains the architecture treatise.
