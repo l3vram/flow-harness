@@ -347,6 +347,16 @@ dimensions — completion, verification (acceptance criteria passed), stability 
 compare reports the +66 delta. Follow-ups: build `EvalInput` from a `RunReport`+QA; per-version history; wire it into
 the run report.
 
+### v0.31 — expose the autonomous run over MCP (`flow_run`) + a runbook ✅ — *self-built*
+MCP-readiness for driving feature-adds on an external repo (an Android app is the target). A reusable
+`runFromConfig(config, {router, baseDir})` in `@flow/orchestrator` (a lean library path — no worktree/lessons; the
+plan gate is a thrown "plan pending" rather than a process exit; the CLI keeps its own `main`), and a **`flow_run`**
+MCP tool (15th tool) that runs planner→CEO→executor→QA on a `targetDir` and returns the report. A runbook
+(`docs/using-flow-via-mcp.md`) covers registering the server, pointing `flow_run` at a repo, and verifying an Android
+app with Gradle QA criteria. **+3 tests (182 total). Self-built + proven live**: a real `flow_run` via the MCP tool
+planned, created the target file, ran QA, and reported. *Finding:* auto-derived acceptance criteria can be
+over-strict and block a correct result — prefer an explicit `verifyCommand`/`tasks` for reliable runs.
+
 ---
 
 ## What remains
@@ -363,12 +373,12 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — MCP readiness (Android) + Priority 1 tail
-**Research (v0.29) and evaluation (v0.30) shipped.** Next: **expose the autonomous run over MCP** — a `flow_run`
-MCP tool (`{objective, targetDir, config}` → planner→CEO→executor→QA) + a **runbook** to register it and point it
-at an external repo (an Android app), so a host like opencode can drive a feature-add. Still open: Android UI QA
-(Layer C); `split`/`replace`/`invalidate`; wiring research into the loop; a helper that builds `EvalInput` from a
-`RunReport`. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜
+`flow_run` over MCP shipped (v0.31) — a host (opencode/Cursor/Claude) can now drive a feature-add on an external
+repo; verify with an explicit `verifyCommand` (Gradle for Android). Open: **Android UI QA (Layer C)** (an
+emulator/device driver); more robust auto-derived criteria; `split`/`replace`/`invalidate` tasks; wiring research
+into the loop; an HTTP MCP transport; a helper that builds `EvalInput` from a `RunReport`. See
+[`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

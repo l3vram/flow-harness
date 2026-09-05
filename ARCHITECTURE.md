@@ -133,7 +133,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `@flow/core` | Event-sourced runtime: event log, projection, Kahn scheduler, state machine + circuit breaker, ledger, gates. **No LLM.** | — | ✅ v0.1 |
 | `@flow/cli` | The `flow` binary; a drop-in for `flow.sh`. | core | ✅ v0.1 |
-| `@flow/mcp-server` | MCP server exposing 14 high-level `flow_*` tools (incl. `flow_execute`, `flow_spec`/`flow_converge`, and `flow_qa` — the QA engine over MCP); any host can drive a run. | core, MCP SDK | ✅ v0.4 / v0.16 / v0.19 |
+| `@flow/mcp-server` | MCP server exposing 15 high-level `flow_*` tools (incl. `flow_execute`, `flow_spec`/`flow_converge`, `flow_qa`, and `flow_run` — the full autonomous run over MCP, for driving a feature-add on an external repo); any host can drive a run. | core, orchestrator, MCP SDK | ✅ v0.4 / v0.16 / v0.19 / v0.31 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `AnthropicProvider`, `ModelRouter`, `routerFromEnv`. Per-tier provider/model, retry/backoff, and **automatic fallback** (a tier's primary fails → auto-switch to its backup). Zero deps. | — | ✅ v0.2 / v0.2.4 |
 | `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. Can **extend the DAG mid-run** (`add_task`) and **replan on a blocked task** from its surfaced diagnosis (repair→replan). | core, llm | ✅ v0.3 / v0.26 / v0.28 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |

@@ -5,6 +5,7 @@ import { routerFromEnv, type ModelRouter } from "@flow/llm";
 import { Planner, type Plan } from "@flow/planner";
 import { converge } from "@flow/converge";
 import { runQA, type Criterion } from "@flow/qa";
+import { runFromConfig, type RunConfig, type TaskSpec } from "@flow/orchestrator";
 
 // The tool layer. Each tool is a plain object with a JSON-Schema input and a pure-ish handler
 // that operates on a Runtime. Keeping the handlers here (independent of the MCP SDK) makes them
@@ -314,6 +315,44 @@ export const tools: ToolDef[] = [
       if (!Array.isArray(criteria)) throw new Error("'criteria' (array) is required");
       const evidenceDir = optStr(args, "evidenceDir");
       return runQA({ target, platform, criteria: criteria as Criterion[] }, evidenceDir ? { evidenceDir } : undefined);
+    },
+  },
+  {
+    name: "flow_run",
+    description:
+      "Run the full autonomous loop from a config: resolve tasks (explicit `tasks`, or planned from an " +
+      "`objective`) then CEO -> executor -> QA on `targetDir`, returning the run report. For an objective, set " +
+      "acceptPlan:true to execute (otherwise it reports the plan is pending). Requires a real LLM backend via FLOW_LLM_*.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...runId,
+        targetDir: { type: "string", description: "Directory to run against (the repo to change)" },
+        objective: { type: "string", description: "What to build/add (planner mode)" },
+        tasks: { type: "array", description: "Explicit tasks (skips the planner)" },
+        verifyCommand: { type: "array", items: { type: "string" } },
+        maxSteps: { type: "number" },
+        contextRoot: { type: "string" },
+        acceptPlan: { type: "boolean", description: "Approve the planned tasks and execute" },
+        deriveCriteria: { type: "boolean", description: "Derive QA criteria from acceptance (default true)" },
+      },
+      required: ["runId", "targetDir"],
+      additionalProperties: false,
+    },
+    handler: async (ctx, args) => {
+      const config: RunConfig = {
+        runId: reqStr(args, "runId"),
+        objective: optStr(args, "objective") ?? "",
+        targetDir: reqStr(args, "targetDir"),
+        tasks: Array.isArray(args.tasks) ? (args.tasks as TaskSpec[]) : undefined,
+        verifyCommand: optStrArray(args, "verifyCommand"),
+        contextRoot: optStr(args, "contextRoot"),
+        maxSteps: typeof args.maxSteps === "number" ? args.maxSteps : undefined,
+        acceptPlan: args.acceptPlan === true,
+        deriveCriteria: args.deriveCriteria === false ? false : undefined,
+      };
+      const router = ctx.router ?? routerFromEnv();
+      return runFromConfig(config, { router, baseDir: ctx.baseDir });
     },
   },
 ];

@@ -14,6 +14,7 @@
     "@flow/core": "*",
     "@flow/executor": "*",
     "@flow/llm": "*",
+    "@flow/orchestrator": "*",
     "@flow/planner": "*",
     "@flow/qa": "*",
     "@modelcontextprotocol/sdk": "^1.12.0"

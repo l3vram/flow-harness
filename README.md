@@ -30,11 +30,12 @@ strong model, execution on a cheap one — configured per tier.
   **context**; a **risk engine** routes high-risk changes to human review.
 - **Learns** — every run records a lesson; later runs recall them.
 - **Two interfaces** — a `flow` CLI (a drop-in for the original `flow.sh`) and an **MCP server**
-  (`flow_*` tools incl. `flow_execute`, `flow_spec`/`flow_converge`, and `flow_qa` — plan, verify with
-  evidence, and check convergence over MCP), so any MCP host can drive it.
+  (`flow_*` tools incl. `flow_execute`, `flow_spec`/`flow_converge`, `flow_qa`, and `flow_run` — plan, verify with
+  evidence, check convergence, and drive a whole autonomous run over MCP), so any MCP host can drive it. See
+  [`docs/using-flow-via-mcp.md`](docs/using-flow-via-mcp.md).
 - **Built by itself** — packages like `@flow/memory` and `@flow/review` were authored by the
   harness running on its own repository, under human review.
-- **Everything runs in Docker.** 179 tests. The core is deterministic — no LLM in it.
+- **Everything runs in Docker.** 182 tests. The core is deterministic — no LLM in it.
 
 ## The one idea
 

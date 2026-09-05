@@ -100,6 +100,23 @@ describe("mcp tool handlers", () => {
     }
   });
 
+  it("flow_run runs the loop and returns a report (the CEO completes immediately)", async () => {
+    const targetDir = mkdtempSync(join(tmpdir(), "flow-mcp-run-"));
+    const provider = new FakeProvider({ responder: () => JSON.stringify({ action: "complete", taskIds: [], newTasks: [], reason: "done", confidence: 1 }) });
+    const router = new ModelRouter(new Map([[provider.name, provider]]), [{ tier: "opus", provider: provider.name, model: "m" }], "opus");
+    try {
+      const res = (await getTool("flow_run").handler({ baseDir: ctx.baseDir, router }, {
+        runId: "mcp-run-1",
+        targetDir,
+        tasks: [{ id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+      })) as { completed: boolean; runId: string };
+      expect(res.completed).toBe(true);
+      expect(res.runId).toBe("mcp-run-1");
+    } finally {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
+  });
+
   describe("flow_execute", () => {
     let targetDir: string;
     let router: ModelRouter;
