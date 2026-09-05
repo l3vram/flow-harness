@@ -309,6 +309,14 @@ QA-verified — with evidence + tickets — when the run completes, no hand-writ
   attached it to the final task, and the orchestrator marked it **green on the QA verdict** (`qa.complete`). The
   harness now takes an objective and returns evidence-verified done — **requirement → evidence → done is automatic.**
 
+### v0.26 — dynamic replanning (step 1): the CEO can add tasks mid-run ✅ — *self-built*
+Priority 1 begins. The CEO gains an **`add_task`** action (+ `newTasks`), so it can **extend the DAG during a run**
+when execution reveals missing work — the foundational "create" of dynamic replanning (feasible because
+`runtime.addTask` is event-sourced with no run-started guard; the Kahn waves recompute). The orchestrator applies it
+by adding each new task to the runtime + specs; the CEO dispatches it on a later step. **+3 tests (166 total).
+Self-built** (an existing exact-match `parseDecision` test needed `newTasks:[]` — updated). Proven by a unit test:
+the CEO adds "b" mid-run, it runs and goes green, and the run completes.
+
 ---
 
 ## What remains
@@ -325,11 +333,11 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 1
-Priority 0 (QA) is complete, **end to end**: an objective now flows planner → derived acceptance criteria →
-execute → QA-verified done, automatically (v0.16–v0.25). **Next: Priority 1** — **dynamic replanning** (the CEO can
-create/split/replace/replan the DAG mid-run when execution reveals new information; unblocks repair→replan) →
-**research** → **evaluation** → **repair→replan**. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜ — Priority 1, continued
+Dynamic replanning began with the CEO's `add_task` (v0.26 — create). Next: `split` / `replace` / `invalidate` a
+task, and **repair→replan** (on repair-budget exhaustion, the CEO diagnoses and replans instead of just blocking).
+Then **research** · **evaluation**. *(Executor-robustness follow-up: a parse error like "no file blocks" still
+aborts a run — route it to the repair loop, as apply failures now do.)* See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

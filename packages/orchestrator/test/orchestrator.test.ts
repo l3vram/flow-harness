@@ -257,6 +257,36 @@ describe("Orchestrator", () => {
     expect(tickets[0]?.severity).toBe("critical");
   });
 
+  it("dynamic replanning: the CEO adds a task mid-run, which then runs and goes green", async () => {
+    const runtime = Runtime.init(runDir, "raddtask", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    // The orchestrator starts knowing only task "a"; the CEO adds "b" during the run.
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    const decisions = [
+      { action: "dispatch", taskIds: [], newTasks: [], reason: "run a", confidence: 0.9 },
+      { action: "add_task", taskIds: [], newTasks: [{ id: "b", role: "backend", tier: "sonnet", deps: ["a"], instruction: "do b" }], reason: "need b", confidence: 0.9 },
+      { action: "advance", taskIds: [], newTasks: [], reason: "wave done", confidence: 0.9 },
+      { action: "dispatch", taskIds: [], newTasks: [], reason: "run b", confidence: 0.9 },
+      { action: "complete", taskIds: [], newTasks: [], reason: "done", confidence: 0.9 },
+    ];
+    const ceoProvider = new FakeProvider({ responder: scripted(decisions.map((d) => JSON.stringify(d))) });
+    const ceoRtr = new ModelRouter(new Map([[ceoProvider.name, ceoProvider]]), [{ tier: "opus", provider: ceoProvider.name, model: "m" }], "opus");
+    const ceo = new Ceo(runtime, ceoRtr);
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.completed).toBe(true);
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.b?.status).toBe("green");
+    expect(runtime.state.plans.some((p) => p.id === "b")).toBe(true);
+  });
+
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
     const runtime = Runtime.init(runDir, "r6", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

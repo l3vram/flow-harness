@@ -4,7 +4,7 @@ import { parseDecision } from "../src/index.js";
 describe("parseDecision", () => {
   it("parses a clean JSON decision", () => {
     const d = parseDecision('{"action":"dispatch","taskIds":["a","b"],"reason":"go","confidence":0.5}');
-    expect(d).toEqual({ action: "dispatch", taskIds: ["a", "b"], reason: "go", confidence: 0.5 });
+    expect(d).toEqual({ action: "dispatch", taskIds: ["a", "b"], newTasks: [], reason: "go", confidence: 0.5 });
   });
 
   it("parses a decision embedded in surrounding prose", () => {

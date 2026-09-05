@@ -1,4 +1,27 @@
-import { CEO_ACTIONS, type CeoDecision } from "./types.js";
+import { CEO_ACTIONS, type CeoDecision, type NewTask } from "./types.js";
+
+/** Normalises the model's `newTasks` array into `NewTask[]`, skipping malformed entries. */
+function parseNewTasks(value: unknown): NewTask[] {
+  if (!Array.isArray(value)) return [];
+  const out: NewTask[] = [];
+  for (const item of value) {
+    const t = item as Record<string, unknown>;
+    if (typeof t.id !== "string" || t.id.length === 0) continue;
+    if (typeof t.instruction !== "string" || t.instruction.length === 0) continue;
+    const task: NewTask = {
+      id: t.id,
+      role: typeof t.role === "string" ? t.role : "backend",
+      tier: typeof t.tier === "string" ? t.tier : "sonnet",
+      instruction: t.instruction,
+    };
+    if (Array.isArray(t.deps)) task.deps = t.deps.filter((d): d is string => typeof d === "string");
+    if (Array.isArray(t.verify) && t.verify.every((v) => typeof v === "string")) {
+      task.verify = t.verify as string[];
+    }
+    out.push(task);
+  }
+  return out;
+}
 
 /**
  * Parses a CEO decision out of raw model text. Robust to surrounding prose: takes the substring
@@ -30,6 +53,8 @@ export function parseDecision(text: string): CeoDecision {
       ? (obj.taskIds as string[])
       : [];
 
+  const newTasks = parseNewTasks(obj.newTasks);
+
   const reason = typeof obj.reason === "string" ? obj.reason : "";
 
   const rawConfidence = obj.confidence;
@@ -38,5 +63,5 @@ export function parseDecision(text: string): CeoDecision {
       ? Math.min(1, Math.max(0, rawConfidence))
       : 0;
 
-  return { action: action as CeoDecision["action"], taskIds, reason, confidence };
+  return { action: action as CeoDecision["action"], taskIds, newTasks, reason, confidence };
 }

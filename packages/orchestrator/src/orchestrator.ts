@@ -54,6 +54,24 @@ export class Orchestrator {
         break; // CEO said advance but the wave isn't done — stop
       }
 
+      if (decision.action === "add_task") {
+        // Dynamic replanning: the CEO extends the DAG mid-run with newly-revealed work.
+        for (const nt of decision.newTasks) {
+          if (this.specs.has(nt.id)) continue;
+          const tier = nt.tier as TaskSpec["tier"];
+          this.runtime.addTask(nt.id, nt.role, tier, nt.deps ?? []);
+          this.specs.set(nt.id, {
+            id: nt.id,
+            role: nt.role,
+            tier,
+            deps: nt.deps ?? [],
+            instruction: nt.instruction,
+            verify: nt.verify,
+          });
+        }
+        continue;
+      }
+
       // action === "dispatch": run every currently-ready task deterministically
       const ready = this.runtime.ready();
       if (ready.length === 0) break; // nothing to do — avoid spinning
