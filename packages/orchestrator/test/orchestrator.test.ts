@@ -197,6 +197,25 @@ describe("Orchestrator", () => {
     expect(readFileSync(join(targetDir, "out.txt"), "utf8").trim()).toBe("GOOD");
   });
 
+  it("QA evidence lands under a run-scoped evidenceDir when configured", async () => {
+    const runtime = Runtime.init(runDir, "rqaev", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a", criteria: [{ id: "c1", description: "ok", verify: ["node", "-e", "process.exit(0)"] }] }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+    const evidenceRoot = join(runDir, "evidence");
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir, evidenceDir: evidenceRoot });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.a?.qa?.evidenceDir?.startsWith(join(evidenceRoot, "a"))).toBe(true);
+  });
+
   it("QA-verified task: passing criteria -> green with a QA report attached", async () => {
     const runtime = Runtime.init(runDir, "rqa1", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

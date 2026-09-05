@@ -125,6 +125,7 @@ async function main(): Promise<void> {
     targetDir: effectiveTargetDir,
     maxSteps: config.maxSteps,
     contextRoot: config.contextRoot,
+    evidenceDir: join(dir, "evidence"),
   });
 
   const report = await orchestrator.run();

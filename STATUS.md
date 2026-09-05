@@ -284,6 +284,13 @@ dynamic import**, so the package and its offline suite build/run without it. Pro
 failing one (ticket + failure screenshot). Built by hand (a real browser can't live in the offline `npm test`);
 suite unchanged at **156**. Layer B is now complete (offline seam + real driver).
 
+### v0.23 — run-scoped QA evidence ✅ — *self-built*
+QA evidence produced during an autonomous run now lands under the run's own directory
+(`<FLOW_HOME>/runs/<runId>/evidence/<taskId>/`) instead of a random temp dir — auditable and inspectable.
+`OrchestratorOptions.evidenceDir` (set by `flow-run`) is threaded into `runQA`; with none set, behavior is
+unchanged. **+1 test (157 total). Self-built.** This closes the QA loop's evidence story — **Priority 0 (QA) is
+complete** for now (only planner-derived criteria, a judgment feature, remains — deferred to Priority 1).
+
 ---
 
 ## What remains
@@ -300,11 +307,12 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 0 (QA) is essentially done
-The QA engine now spans Layer A (v0.18), `flow_qa` over MCP (v0.19), orchestrator wiring (v0.20), and Layer B
-(offline seam v0.21 + real Playwright driver v0.22). Remaining QA-adjacent polish: **derive criteria from the
-planner's `spec.acceptance`** (the Requirement→Verification graph) and **run-scoped evidence under `FLOW_HOME`**.
-Then **Priority 1**: dynamic replanning · research · evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜ — Priority 1 (QA complete)
+The QA engine is done: Layer A (v0.18), `flow_qa` over MCP (v0.19), orchestrator wiring (v0.20), Layer B (offline
+seam v0.21 + real Playwright driver v0.22), and run-scoped evidence (v0.23). The one remaining QA-adjacent item —
+deriving executable criteria from the planner's free-text `spec.acceptance` (the Requirement→Verification graph) —
+is a judgment/LLM feature, tracked under Priority 1. **Next: Priority 1** — dynamic replanning · research ·
+evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

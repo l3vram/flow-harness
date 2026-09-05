@@ -26,6 +26,8 @@ export interface OrchestratorOptions {
   maxSteps?: number;
   contextRoot?: string;
   maxRepairAttempts?: number;
+  /** Base dir for run-scoped QA evidence; each task's evidence lands under <evidenceDir>/<taskId>. */
+  evidenceDir?: string;
 }
 
 /** The outcome of dispatching a single task through the executor. */

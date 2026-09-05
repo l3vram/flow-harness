@@ -172,11 +172,12 @@ export class Orchestrator {
 
   /** Runs the task's acceptance criteria through @flow/qa against the target directory. */
   private runQaFor(spec: TaskSpec): QAReport {
-    return runQA({
-      target: this.opts.targetDir,
-      platform: spec.platform ?? "node",
-      criteria: spec.criteria ?? [],
-    });
+    const evidenceDir =
+      this.opts.evidenceDir !== undefined ? join(this.opts.evidenceDir, spec.id) : undefined;
+    return runQA(
+      { target: this.opts.targetDir, platform: spec.platform ?? "node", criteria: spec.criteria ?? [] },
+      evidenceDir !== undefined ? { evidenceDir } : undefined,
+    );
   }
 
   /** Renders a QA report's failing tickets into a repair signal for the executor. */
