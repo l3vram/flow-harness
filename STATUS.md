@@ -268,6 +268,14 @@ Backward compatible (no criteria → unchanged). Evidence goes to a temp dir, so
 - ✅ **Dogfooded end to end**: a real `flow-run` whose task carried `criteria` went **green on the QA verdict**
   (`qa.complete`, report attached) — the first time the loop's accept decision was made by the QA engine.
 
+### v0.21 — `@flow/qa` Layer B: the web-QA seam (offline) ✅ — *self-built*
+The browser side of QA, testable without a browser. Structured web criteria
+(`goto`/`expectText`/`expectSelector`/`screenshot`), a `WebDriver` interface, a deterministic `FakeWebDriver`
+(the browser analogue of `FakeProvider`), and `runWebQA` returning the same `QAReport` (screenshots +
+console/network evidence, tickets on failure). No new deps; fully offline. **+2 tests (156 total). Self-built.**
+The real `PlaywrightDriver` + a live-browser smoke is v0.22 (supervised — browser binaries can't live in the
+offline suite).
+
 ---
 
 ## What remains
@@ -285,10 +293,11 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 0: QA Engine, continued
-Layer A (v0.18), `flow_qa` over MCP (v0.19), and QA wired into the orchestrator (v0.20) shipped. Next: **Layer B —
-Playwright web E2E** (screenshots/traces/console/network), then **derive criteria from the planner's
-`spec.acceptance`** and **run-scoped evidence under `FLOW_HOME`**. Then: requirement→verification graph → strong
-convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
+Layer A (v0.18), `flow_qa` over MCP (v0.19), QA wired into the orchestrator (v0.20), and the Layer B web-QA
+**seam** (v0.21) shipped. Next: the real **`PlaywrightDriver`** + a live-browser smoke (v0.22, supervised — browser
+binaries can't live in the offline suite), then **derive criteria from the planner's `spec.acceptance`** and
+**run-scoped evidence under `FLOW_HOME`**. Then: requirement→verification graph → strong convergence → dynamic
+replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
 
 ---
 
