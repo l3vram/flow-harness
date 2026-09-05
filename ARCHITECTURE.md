@@ -144,6 +144,7 @@ stateDiagram-v2
 | `@flow/planner` | Spec-Driven Development planner (GitHub Spec Kit): objective → spec (requirements + acceptance + clarifications) → ordered task DAG with per-task verify. **Self-built (CEO on Gemini).** Wired into `flow-run` (objective → plan → gate → execute). | llm | ✅ v0.12 |
 | `@flow/converge` | SDD Converge/Analyze: `converge(plan, outcomes)` → deterministic done-vs-spec report (green/pending, complete, open clarifications). **Self-built.** | planner | ✅ v0.14 |
 | `@flow/git` | Git worktree wrapper (spawnSync, no shell): createWorktree, commitAll, changedFiles… — isolates a run on its own branch. **Self-built (first try).** `flow-run "worktree": true` → the run's changes land on `flow/<runId>` for a PR, working tree untouched. | — | ✅ v0.15 |
+| `@flow/qa` | Deterministic QA engine (Layer A): `runQA` verifies each acceptance criterion with its own explicit command (spawnSync, no shell), writes evidence artifacts, and emits a report + error tickets. Independent, run-less, offline; lib + bin `flow-qa`. Emits evidence/verdicts/tickets, not decisions. **Self-built.** | — | ✅ v0.18 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)
@@ -189,10 +190,10 @@ fallback** rides through saturation, and each run can be **isolated on its own g
 for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and the CEO on Claude in a
 multi-LLM run), the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
 self-built), and the **executor is hardened** (atomic apply; a total provider failure blocks the task instead of
-aborting the run — v0.17, self-built). Next: **QA + Playwright** — the exhaustive verifier across web/Android/iOS
-that files error tickets for a CEO-driven fix loop — then an **evaluation harness** (score runs against
-acceptance) · **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote
-deployment. The end state: point the harness at its own repository and let it build its next
+aborting the run — v0.17, self-built), and the **QA engine has its deterministic first layer** (`@flow/qa` —
+per-criterion evidence + error tickets, standalone, v0.18, self-built). Next: **QA Layer B (Playwright web)** +
+wiring tickets into a CEO-driven fix loop, then an **evaluation harness** (score runs against acceptance) ·
+**controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.
 The prioritized execution plan (17 capabilities, dependency-ordered, status-tagged) and the project's
 headline metric — an autonomous, evidence-verified web-app build repeated across specs — live in

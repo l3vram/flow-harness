@@ -13,6 +13,7 @@
     { "path": "packages/review" },
     { "path": "packages/planner" },
     { "path": "packages/converge" },
-    { "path": "packages/git" }
+    { "path": "packages/git" },
+    { "path": "packages/qa" }
   ]
 }

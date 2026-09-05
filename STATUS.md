@@ -239,6 +239,16 @@ hardened executor, under human Gates A/B):
   verification (task blocked after the repair budget), so the run continues instead of crashing.
 - ✅ **+3 tests (147 total).**
 
+### v0.18 — `@flow/qa` (QA engine, Layer A) ✅ — *self-built*
+The first brick of the QA engine ([ADR 0007](docs/decisions/0007-qa-independent-capability.md)): an
+**independent**, run-less, **offline** capability — pure lib `@flow/qa` + bin `flow-qa`.
+- ✅ `runQA({target, platform, criteria})` verifies each acceptance criterion with its **own explicit command**
+  (spawnSync, no shell), writes **evidence** artifacts (stdout/stderr/exit) to disk, and returns a **QA report**
+  with per-criterion pass/fail + error **tickets** (severity, symptom, evidence, repro, tags). It emits
+  evidence/verdicts/tickets, **never decisions**; `complete` = all criteria pass.
+- ✅ bin `flow-qa <target> <request.json>` (exit ≠0 unless complete) — a drop-in system verifier, proven standalone.
+- ✅ **Self-built** by `flow-run` in a single clean pass. **+4 tests (151 total).**
+
 ---
 
 ## What remains
@@ -255,11 +265,12 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 0: the QA Engine
-The exhaustive verifier and the driver of the fix loop: unit / integration / API / E2E, **Playwright** for
-web (Android/iOS views later), automatic **evidence** (screenshots, traces, console, network); errors filed
-as **tickets** fed to the **CEO** to drive a repair loop until green. Then: evidence → requirement→verification
-graph → strong convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
+### Next ⬜ — Priority 0: QA Engine, continued
+Layer A (deterministic per-criterion verification + evidence + tickets) shipped in v0.18. Next: **Layer B —
+Playwright web E2E** (launch the app, drive flows, capture screenshots/traces/console/network), then expose
+**`flow_qa` over MCP** and **wire QA into the orchestrator** so tickets feed the **CEO**'s repair loop until
+green. Then: requirement→verification graph → strong convergence → dynamic replanning → … (see
+[`plans/ROADMAP.md`](plans/ROADMAP.md)).
 
 ---
 

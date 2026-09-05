@@ -1,0 +1,15 @@
+{
+  "name": "@flow/qa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic QA engine (Layer A): runs an explicit verification per acceptance criterion, captures evidence artifacts, and emits a QA report with error tickets. Independent, run-less, contract-first.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "flow-qa": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -35,7 +35,7 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   convergencia por MCP), para que cualquier host MCP lo maneje.
 - **Se construye a sí mismo** — paquetes como `@flow/memory` y `@flow/review` fueron escritos por el
   harness corriendo sobre su propio repositorio, bajo revisión humana.
-- **Todo corre en Docker.** 147 tests. El núcleo es determinista — sin LLM.
+- **Todo corre en Docker.** 151 tests. El núcleo es determinista — sin LLM.
 
 ## La idea única
 
@@ -64,6 +64,7 @@ registros de decisiones de arquitectura (ADRs).
 | `@flow/planner` | Planner Spec-Driven Development: objetivo → spec → DAG ordenado de tareas con verify por tarea |
 | `@flow/converge` | Reporte de convergencia done-vs-spec (green/pending, completo, clarificaciones abiertas) |
 | `@flow/git` | Worktree de git por run + gate de PR — aísla el run en su propia rama, working tree intacto |
+| `@flow/qa` | Motor de QA determinista (Capa A): verificación por criterio + evidencia + tickets de error; lib standalone + bin `flow-qa` |
 
 ## Inicio rápido (Docker)
 

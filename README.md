@@ -34,7 +34,7 @@ strong model, execution on a cheap one — configured per tier.
   over MCP), so any MCP host can drive it.
 - **Built by itself** — packages like `@flow/memory` and `@flow/review` were authored by the
   harness running on its own repository, under human review.
-- **Everything runs in Docker.** 147 tests. The core is deterministic — no LLM in it.
+- **Everything runs in Docker.** 151 tests. The core is deterministic — no LLM in it.
 
 ## The one idea
 
@@ -63,6 +63,7 @@ architecture decision records.
 | `@flow/planner` | Spec-Driven Development planner: objective → spec → ordered task DAG with per-task verify |
 | `@flow/converge` | Done-vs-spec convergence report (green/pending, complete, open clarifications) |
 | `@flow/git` | Git worktree per run + PR gate — isolates a run on its own branch, working tree untouched |
+| `@flow/qa` | Deterministic QA engine (Layer A): per-criterion verification + evidence + error tickets; standalone lib + `flow-qa` bin |
 
 ## Quickstart (Docker)
 
