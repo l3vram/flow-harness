@@ -287,6 +287,27 @@ describe("Orchestrator", () => {
     expect(runtime.state.plans.some((p) => p.id === "b")).toBe(true);
   });
 
+  it("repair recovers from a parse failure: a no-file-blocks response is retried and a valid write passes", async () => {
+    const runtime = Runtime.init(runDir, "rparse", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(
+      scriptedExecRouter(["I could not produce any files.", "<<<FILE out.txt>>>\nGOOD\n<<<END>>>"]),
+      { verifyCommand: verifyGood },
+    );
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.a?.attempts).toBe(2);
+  });
+
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
     const runtime = Runtime.init(runDir, "r6", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

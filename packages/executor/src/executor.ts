@@ -32,7 +32,17 @@ export class Executor {
       return { taskId: task.id, files: [], reason: "", verify: { ran: true, ok: false, output: `llm request failed: ${message}` } };
     }
 
-    const { changes, reason } = parseChanges(res.text, this.opts.maxFiles ?? 50);
+    let parsed: ReturnType<typeof parseChanges>;
+    try {
+      parsed = parseChanges(res.text, this.opts.maxFiles ?? 50);
+    } catch (err) {
+      // A parse failure — most often "no file blocks" when the model replied with prose instead of
+      // file/edit blocks — must NOT abort the run. Route it to the repair loop as a failed verification,
+      // the same path apply and provider failures take.
+      const message = err instanceof Error ? err.message : String(err);
+      return { taskId: task.id, files: [], reason: "", verify: { ran: true, ok: false, output: `parse failed: ${message}` } };
+    }
+    const { changes, reason } = parsed;
 
     let applied: string[];
     try {

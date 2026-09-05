@@ -110,6 +110,21 @@ describe("Executor", () => {
     expect(result.verify.output).toContain("llm request failed");
   });
 
+  it("turns a parse failure (no file blocks) into a failed verify (no throw) so the repair loop can retry", async () => {
+    const text = "I finished the task; there is nothing to write.";
+    const router = routerWithResponse(text);
+    const executor = new Executor(router, { verifyCommand: ["node", "-e", "process.exit(0)"] });
+
+    const result = await executor.run(
+      { id: "t5", instruction: "do it" },
+      { targetDir: dir },
+    );
+
+    expect(result.files).toEqual([]);
+    expect(result.verify.ok).toBe(false);
+    expect(result.verify.output).toContain("parse failed");
+  });
+
   it("edits an existing file via an EDIT block", async () => {
     writeFileSync(join(dir, "hello.txt"), "hi there", "utf8");
     const text = [

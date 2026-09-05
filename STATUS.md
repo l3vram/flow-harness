@@ -317,6 +317,13 @@ by adding each new task to the runtime + specs; the CEO dispatches it on a later
 Self-built** (an existing exact-match `parseDecision` test needed `newTasks:[]` — updated). Proven by a unit test:
 the CEO adds "b" mid-run, it runs and goes green, and the run completes.
 
+### v0.27 — executor robustness: a parse failure routes to the repair loop ✅ — *self-built*
+Closes the last un-caught executor throw path (surfaced by v0.26's auto-build): a **parse** error
+("no file blocks", from `parseChanges`) no longer aborts the run — it becomes a failed verification the
+orchestrator's repair loop feeds back, exactly as apply and provider failures do (v0.17). All three executor
+failure modes now degrade to a repairable/blocked task. **+2 tests (168 total)**, including an end-to-end recovery
+(attempt 1 no-file-blocks → retry → attempt 2 valid write passes, green). Self-built.
+
 ---
 
 ## What remains
@@ -334,10 +341,10 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 1, continued
-Dynamic replanning began with the CEO's `add_task` (v0.26 — create). Next: `split` / `replace` / `invalidate` a
-task, and **repair→replan** (on repair-budget exhaustion, the CEO diagnoses and replans instead of just blocking).
-Then **research** · **evaluation**. *(Executor-robustness follow-up: a parse error like "no file blocks" still
-aborts a run — route it to the repair loop, as apply failures now do.)* See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+Dynamic replanning began with the CEO's `add_task` (v0.26), and all executor failure paths (provider/apply/parse)
+now route to the repair loop (v0.17/v0.27). Next: **repair→replan** — on repair-budget exhaustion the CEO
+diagnoses and replans (via `add_task`) instead of just blocking — then `split` / `replace` / `invalidate`, then
+**research** · **evaluation**. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 
