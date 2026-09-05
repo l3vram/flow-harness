@@ -20,6 +20,12 @@ treatise and `STATUS.md` the milestone tracker.
 1. **QA Engine** ⬜ — unit / integration / API / E2E; **Playwright** for web; automatic **evidence**
    (screenshots, traces, console, network, results). *Today:* verification is a single deterministic
    `verifyCommand` run by the executor — no dedicated QA package, no browser evidence. The big next one.
+   **Architecture ([ADR 0007](../docs/decisions/0007-qa-independent-capability.md)):** build it independent
+   on the standard seam — pure lib `@flow/qa` → bin `flow-qa` → MCP tool `flow_qa` — so it is usable
+   standalone *or* composed. `flow_qa` is **run-less**: input `{target, acceptance criteria/suite, platform}`
+   → a serializable **QA report** (per-criterion pass/fail + evidence artifacts on disk + error **tickets**).
+   QA emits evidence/verdicts/tickets, not decisions (the CEO decides fixes). Ship in layers: **A** suites →
+   **B** Playwright web → **C** mobile (later); package+bin → MCP → wire into the orchestrator, like v0.16.
 2. **Requirement → Evidence → Done** 🚧 — every requirement has acceptance criteria, every criterion has
    a verification, `DONE` only with objective evidence; never "the agent says it works." *Today:*
    `@flow/planner` emits `spec.acceptance[]` + per-task `verify[]`, and DONE already gates on a real
