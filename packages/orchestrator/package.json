@@ -19,7 +19,8 @@
     "@flow/review": "*",
     "@flow/planner": "*",
     "@flow/qa": "*",
-    "@flow/git": "*"
+    "@flow/git": "*",
+    "@flow/verify": "*"
   },
   "files": [
     "dist"

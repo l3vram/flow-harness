@@ -10,7 +10,9 @@ import { MemoryStore, searchLessons } from "@flow/memory";
 import { ContextEngine } from "@flow/context";
 import { Planner } from "@flow/planner";
 import { isGitRepo, createWorktree, commitAll } from "@flow/git";
+import { deriveCriteria } from "@flow/verify";
 import { Orchestrator } from "./orchestrator.js";
+import { attachAcceptanceCriteria } from "./acceptance.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
 async function main(): Promise<void> {
@@ -77,6 +79,17 @@ async function main(): Promise<void> {
       instruction: t.instruction,
       verify: t.verify,
     }));
+
+    // Turn the plan's free-text acceptance into executable QA criteria and attach them to the final
+    // task, so the whole objective is QA-verified (with evidence + tickets) when the run completes.
+    if (config.deriveCriteria !== false && plan.spec.acceptance.length > 0) {
+      const criteria = await deriveCriteria(router, plan.spec.acceptance);
+      taskList = attachAcceptanceCriteria(taskList, criteria);
+      const finalTask = taskList[taskList.length - 1];
+      console.error(
+        `Derived ${criteria.length} acceptance criteria from the spec; attached to final task '${finalTask?.id ?? ""}'.`,
+      );
+    }
   } else {
     console.error("flow-run: config needs either tasks or an objective");
     process.exit(1);

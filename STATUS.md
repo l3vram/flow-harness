@@ -299,6 +299,16 @@ with a scripted router — like the planner. **+4 tests (161 total). Self-built 
 free-text acceptances into executable criteria (with commands, severity, tags). Follow-up: wire it into `flow-run`
 (planner acceptance → derived criteria → orchestrator QA-verifies), closing requirement→evidence→done automatically.
 
+### v0.25 — wire `deriveCriteria` into flow-run ✅ — *self-built, proven end to end*
+Closes the QA loop automatically. In objective mode, `flow-run` now turns the planner's free-text `spec.acceptance`
+into executable QA criteria (`@flow/verify`) and attaches them to the plan's final task (pure helper
+`attachAcceptanceCriteria`; `RunConfig.deriveCriteria`, default true, opts in/out), so the whole objective is
+QA-verified — with evidence + tickets — when the run completes, no hand-written criteria.
+- ✅ **+2 tests (163 total). Self-built.**
+- ✅ **Proven end to end**: a real objective-mode run built `hello.js`, derived the acceptance into a criterion,
+  attached it to the final task, and the orchestrator marked it **green on the QA verdict** (`qa.complete`). The
+  harness now takes an objective and returns evidence-verified done — **requirement → evidence → done is automatic.**
+
 ---
 
 ## What remains
@@ -316,10 +326,10 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 1
-QA is done, and the Requirement→Verification node (`@flow/verify.deriveCriteria`) now turns free-text acceptance
-into executable criteria (v0.24, standalone). Small QA follow-up: **wire `deriveCriteria` into `flow-run`** (planner
-acceptance → derived criteria → orchestrator QA-verifies), closing requirement→evidence→done automatically. Then
-**Priority 1** — dynamic replanning · research · evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+Priority 0 (QA) is complete, **end to end**: an objective now flows planner → derived acceptance criteria →
+execute → QA-verified done, automatically (v0.16–v0.25). **Next: Priority 1** — **dynamic replanning** (the CEO can
+create/split/replace/replan the DAG mid-run when execution reveals new information; unblocks repair→replan) →
+**research** → **evaluation** → **repair→replan**. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

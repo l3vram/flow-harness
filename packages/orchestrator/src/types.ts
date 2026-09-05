@@ -67,4 +67,6 @@ export interface RunConfig {
   acceptPlan?: boolean;
   /** Isolate the run in a git worktree/branch of targetDir (a PR gate) instead of its working tree. */
   worktree?: boolean;
+  /** Derive QA acceptance criteria from the planner's spec.acceptance and attach them to the final task (default true). */
+  deriveCriteria?: boolean;
 }
