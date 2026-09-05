@@ -11,6 +11,9 @@ snapshot of the run. Choose exactly one action:
   (haiku|sonnet|opus), deps (ids it must follow), and a clear instruction.
 - "await_human": pause for a human decision (ambiguity, risk, or a needed gate).
 - "complete": the objective is met and every task is green.
+When a task is \`blocked\` (its repair budget is exhausted), read its \`reason\` to diagnose the failure,
+then either \`add_task\` a remediation task that addresses the blocker, or \`await_human\` if it truly needs a
+person. Never \`complete\` while critical work is blocked.
 Reply with ONLY a JSON object, no prose, of exactly this shape:
 {"action":"dispatch|advance|add_task|await_human|complete","taskIds":["..."],"newTasks":[{"id":"...","role":"...","tier":"...","deps":["..."],"instruction":"..."}],"reason":"one sentence","confidence":0.0}`;
 
@@ -32,6 +35,7 @@ export function buildDecisionMessages(state: State, ready: string[], advisory = 
       tier: p.tier,
       status: p.status,
       deps: p.deps,
+      reason: p.reason ?? "",
     })),
   };
   let userContent = JSON.stringify(snapshot);

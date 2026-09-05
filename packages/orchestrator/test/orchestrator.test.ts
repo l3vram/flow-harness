@@ -308,6 +308,34 @@ describe("Orchestrator", () => {
     expect(report.outcomes.a?.attempts).toBe(2);
   });
 
+  it("repair->replan: a task that exhausts its repair budget blocks, then the CEO adds a remediation task that passes", async () => {
+    const runtime = Runtime.init(runDir, "rreplan", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    // "a" always fails verify, so it exhausts its repair budget and blocks.
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a", verify: ["node", "-e", "process.exit(1)"] }],
+    ]);
+
+    // CEO: dispatch (a blocks) -> add_task a remediation "a-fix" with a passing verify -> dispatch -> complete.
+    const decisions = [
+      { action: "dispatch", taskIds: [], newTasks: [], reason: "run a", confidence: 0.9 },
+      { action: "add_task", taskIds: [], newTasks: [{ id: "a-fix", role: "backend", tier: "sonnet", deps: [], instruction: "fix it", verify: ["node", "-e", "process.exit(0)"] }], reason: "a is blocked; replan", confidence: 0.9 },
+      { action: "dispatch", taskIds: [], newTasks: [], reason: "run a-fix", confidence: 0.9 },
+      { action: "complete", taskIds: [], newTasks: [], reason: "done", confidence: 0.9 },
+    ];
+    const ceoProvider = new FakeProvider({ responder: scripted(decisions.map((d) => JSON.stringify(d))) });
+    const ceoRtr = new ModelRouter(new Map([[ceoProvider.name, ceoProvider]]), [{ tier: "opus", provider: ceoProvider.name, model: "m" }], "opus");
+    const ceo = new Ceo(runtime, ceoRtr);
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("blocked");
+    expect(report.outcomes["a-fix"]?.status).toBe("green");
+  });
+
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
     const runtime = Runtime.init(runDir, "r6", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

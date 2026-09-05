@@ -324,6 +324,13 @@ orchestrator's repair loop feeds back, exactly as apply and provider failures do
 failure modes now degrade to a repairable/blocked task. **+2 tests (168 total)**, including an end-to-end recovery
 (attempt 1 no-file-blocks → retry → attempt 2 valid write passes, green). Self-built.
 
+### v0.28 — repair→replan: the CEO diagnoses a blocked task and replans ✅ — *self-built*
+Turns "repair → blocked → dead end" into "repair → diagnose → replan". The CEO's state snapshot now carries each
+task's **`reason`** (the block/verify/QA diagnosis), and its prompt tells it: on a `blocked` task (repair budget
+exhausted), diagnose from the reason and **`add_task`** a remediation (or `await_human`) rather than stopping —
+never `complete` while critical work is blocked. **+3 tests (171 total)**, including an end-to-end run where a task
+exhausts its repair budget and blocks, the CEO adds a remediation, and it goes green. Self-built.
+
 ---
 
 ## What remains
@@ -341,10 +348,9 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 1, continued
-Dynamic replanning began with the CEO's `add_task` (v0.26), and all executor failure paths (provider/apply/parse)
-now route to the repair loop (v0.17/v0.27). Next: **repair→replan** — on repair-budget exhaustion the CEO
-diagnoses and replans (via `add_task`) instead of just blocking — then `split` / `replace` / `invalidate`, then
-**research** · **evaluation**. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+Dynamic replanning now covers **create** (`add_task`, v0.26) and **repair→replan** (v0.28); executor failure paths
+all route to repair (v0.17/v0.27). Next: `split` / `replace` / `invalidate` a task, then **research** (search before
+implementing under uncertainty) and an **evaluation engine** (score runs objectively). See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 
