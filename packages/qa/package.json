@@ -11,5 +11,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "optionalDependencies": {
+    "playwright": "^1.63.0"
+  }
 }

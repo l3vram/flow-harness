@@ -276,6 +276,14 @@ console/network evidence, tickets on failure). No new deps; fully offline. **+2 
 The real `PlaywrightDriver` + a live-browser smoke is v0.22 (supervised — browser binaries can't live in the
 offline suite).
 
+### v0.22 — `@flow/qa` Layer B: the real Playwright driver ✅ — *supervisor-built*
+`PlaywrightDriver` implements `WebDriver` against a real browser, so `runWebQA` verifies a running web app with
+real screenshots + console + network evidence. `playwright` is an **optionalDependency** loaded via a **non-literal
+dynamic import**, so the package and its offline suite build/run without it. Proven with a **live-browser smoke**
+(`packages/qa/smoke/playwright-smoke.mjs`): real Chromium drove a page — a passing criterion and a deliberately
+failing one (ticket + failure screenshot). Built by hand (a real browser can't live in the offline `npm test`);
+suite unchanged at **156**. Layer B is now complete (offline seam + real driver).
+
 ---
 
 ## What remains
@@ -292,12 +300,11 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 0: QA Engine, continued
-Layer A (v0.18), `flow_qa` over MCP (v0.19), QA wired into the orchestrator (v0.20), and the Layer B web-QA
-**seam** (v0.21) shipped. Next: the real **`PlaywrightDriver`** + a live-browser smoke (v0.22, supervised — browser
-binaries can't live in the offline suite), then **derive criteria from the planner's `spec.acceptance`** and
-**run-scoped evidence under `FLOW_HOME`**. Then: requirement→verification graph → strong convergence → dynamic
-replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
+### Next ⬜ — Priority 0 (QA) is essentially done
+The QA engine now spans Layer A (v0.18), `flow_qa` over MCP (v0.19), orchestrator wiring (v0.20), and Layer B
+(offline seam v0.21 + real Playwright driver v0.22). Remaining QA-adjacent polish: **derive criteria from the
+planner's `spec.acceptance`** (the Requirement→Verification graph) and **run-scoped evidence under `FLOW_HOME`**.
+Then **Priority 1**: dynamic replanning · research · evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

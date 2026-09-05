@@ -64,7 +64,7 @@ registros de decisiones de arquitectura (ADRs).
 | `@flow/planner` | Planner Spec-Driven Development: objetivo → spec → DAG ordenado de tareas con verify por tarea |
 | `@flow/converge` | Reporte de convergencia done-vs-spec (green/pending, completo, clarificaciones abiertas) |
 | `@flow/git` | Worktree de git por run + gate de PR — aísla el run en su propia rama, working tree intacto |
-| `@flow/qa` | Motor de QA determinista (Capa A): verificación por criterio + evidencia + tickets de error; lib standalone + bin `flow-qa` |
+| `@flow/qa` | Motor de QA determinista: verificación por criterio (Capa A) + E2E web con Playwright (Capa B) + evidencia + tickets de error; lib standalone + bin `flow-qa` |
 
 ## Inicio rápido (Docker)
 

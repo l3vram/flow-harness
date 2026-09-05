@@ -63,7 +63,7 @@ architecture decision records.
 | `@flow/planner` | Spec-Driven Development planner: objective → spec → ordered task DAG with per-task verify |
 | `@flow/converge` | Done-vs-spec convergence report (green/pending, complete, open clarifications) |
 | `@flow/git` | Git worktree per run + PR gate — isolates a run on its own branch, working tree untouched |
-| `@flow/qa` | Deterministic QA engine (Layer A): per-criterion verification + evidence + error tickets; standalone lib + `flow-qa` bin |
+| `@flow/qa` | Deterministic QA engine: per-criterion verification (Layer A) + web E2E via Playwright (Layer B) + evidence + error tickets; standalone lib + `flow-qa` bin |
 
 ## Quickstart (Docker)
 
