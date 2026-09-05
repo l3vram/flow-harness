@@ -1,0 +1,16 @@
+{
+  "name": "@flow/verify",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Derives executable QA criteria from free-text acceptance statements (the Requirement->Verification node): an LLM step plus a deterministic parser.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@flow/llm": "*",
+    "@flow/qa": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

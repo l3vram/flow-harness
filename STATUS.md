@@ -291,6 +291,14 @@ QA evidence produced during an autonomous run now lands under the run's own dire
 unchanged. **+1 test (157 total). Self-built.** This closes the QA loop's evidence story — **Priority 0 (QA) is
 complete** for now (only planner-derived criteria, a judgment feature, remains — deferred to Priority 1).
 
+### v0.24 — `@flow/verify`: derive QA criteria from acceptance ✅ — *self-built*
+The Requirement→Verification node: `deriveCriteria(router, acceptance, context?)` turns the planner's free-text
+acceptance statements into **executable** QA `Criterion[]` (an LLM step on `opus` + a deterministic parser),
+directly consumable by `runQA`. A new package `@flow/verify` (deps `@flow/llm` + `@flow/qa`), offline-testable
+with a scripted router — like the planner. **+4 tests (161 total). Self-built + dogfooded**: Gemini turned two
+free-text acceptances into executable criteria (with commands, severity, tags). Follow-up: wire it into `flow-run`
+(planner acceptance → derived criteria → orchestrator QA-verifies), closing requirement→evidence→done automatically.
+
 ---
 
 ## What remains
@@ -307,12 +315,11 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 1 (QA complete)
-The QA engine is done: Layer A (v0.18), `flow_qa` over MCP (v0.19), orchestrator wiring (v0.20), Layer B (offline
-seam v0.21 + real Playwright driver v0.22), and run-scoped evidence (v0.23). The one remaining QA-adjacent item —
-deriving executable criteria from the planner's free-text `spec.acceptance` (the Requirement→Verification graph) —
-is a judgment/LLM feature, tracked under Priority 1. **Next: Priority 1** — dynamic replanning · research ·
-evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜ — Priority 1
+QA is done, and the Requirement→Verification node (`@flow/verify.deriveCriteria`) now turns free-text acceptance
+into executable criteria (v0.24, standalone). Small QA follow-up: **wire `deriveCriteria` into `flow-run`** (planner
+acceptance → derived criteria → orchestrator QA-verifies), closing requirement→evidence→done automatically. Then
+**Priority 1** — dynamic replanning · research · evaluation · repair→replan. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 
