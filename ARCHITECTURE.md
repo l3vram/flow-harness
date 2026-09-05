@@ -147,6 +147,7 @@ stateDiagram-v2
 | `@flow/qa` | Deterministic QA engine. Layer A: `runQA` verifies each acceptance criterion with its own explicit command (spawnSync, no shell), writes evidence, emits a report + error tickets. Layer B: `runWebQA` over a `WebDriver` (structured web criteria; a `FakeWebDriver` for offline tests, a real `PlaywrightDriver` — optional dep, dynamic-imported — for a live browser). Independent, run-less, offline; lib + bin `flow-qa`; emits evidence/verdicts/tickets, not decisions. **Self-built.** | — | ✅ v0.18 / v0.21 / v0.22 |
 | `@flow/verify` | The Requirement→Verification node: `deriveCriteria` turns the planner's free-text acceptance into executable QA `Criterion[]` (an LLM step + a deterministic parser), directly consumable by `runQA`. **Self-built.** | llm, qa | ✅ v0.24 |
 | `@flow/research` | Research before implementing: `research(router, query)` synthesizes structured findings + sources (LLM + deterministic parse) as context for the CEO/executor. A real search provider plugs in later. **Self-built.** | llm | ✅ v0.29 |
+| `@flow/eval` | Objective evaluation engine: `evaluate` scores a run 0–100 across dimensions from its facts (deterministic, no LLM); `compare` diffs runs across versions. **Self-built.** | — | ✅ v0.30 |
 
 Runtime is Node ≥ 22 + TypeScript (ESM, `NodeNext`), npm workspaces, `tsc -b`. Everything runs
 in Docker (`docker compose run --rm test | flow | mcp | llm`). See [`docs/decisions`](docs/decisions)

@@ -16,6 +16,7 @@
     { "path": "packages/git" },
     { "path": "packages/qa" },
     { "path": "packages/verify" },
-    { "path": "packages/research" }
+    { "path": "packages/research" },
+    { "path": "packages/eval" }
   ]
 }

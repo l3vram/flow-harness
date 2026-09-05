@@ -1,0 +1,12 @@
+{
+  "name": "@flow/eval",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic evaluation engine: scores a run 0-100 across dimensions from its facts, and compares runs across versions. No LLM.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
+}

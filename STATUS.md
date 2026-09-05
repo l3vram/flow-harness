@@ -339,6 +339,14 @@ router. **+4 tests (175 total). Self-built + dogfooded**: a real Gemini run turn
 dark-mode toggle) into 13 concrete findings + official docs sources. Follow-ups: a real web/GitHub search provider
 behind the same function; wiring the CEO to research on uncertainty.
 
+### v0.30 — `@flow/eval`: objective evaluation engine ✅ — *self-built*
+Priority-1 evaluation: `evaluate(input)` scores a run **0–100 from its facts** (deterministic, no LLM) across five
+dimensions — completion, verification (acceptance criteria passed), stability (blocked), efficiency (retries), safety
+(critical tickets) — and `compare(a, b)` diffs two runs across versions (`better`/`worse`/`same`). New package
+`@flow/eval` (no deps). **+4 tests (179 total). Self-built + demonstrated**: a good run scores 100, a poor run 34, and
+compare reports the +66 delta. Follow-ups: build `EvalInput` from a `RunReport`+QA; per-version history; wire it into
+the run report.
+
 ---
 
 ## What remains
@@ -355,12 +363,12 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 1 + MCP readiness
-Dynamic replanning covers create (`add_task`, v0.26) and repair→replan (v0.28); **research** shipped (v0.29). Next:
-an **evaluation engine** (score runs objectively — correctness/tests/requirements/regressions/security/cost), then
-**expose the autonomous run over MCP** (`flow_run` + a runbook) to drive feature-adds on external repos (an Android
-app is the target). Also open: `split`/`replace`/`invalidate` tasks; Android UI QA (Layer C). See
-[`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜ — MCP readiness (Android) + Priority 1 tail
+**Research (v0.29) and evaluation (v0.30) shipped.** Next: **expose the autonomous run over MCP** — a `flow_run`
+MCP tool (`{objective, targetDir, config}` → planner→CEO→executor→QA) + a **runbook** to register it and point it
+at an external repo (an Android app), so a host like opencode can drive a feature-add. Still open: Android UI QA
+(Layer C); `split`/`replace`/`invalidate`; wiring research into the loop; a helper that builds `EvalInput` from a
+`RunReport`. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 
