@@ -1,0 +1,15 @@
+{
+  "name": "@flow/research",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Research before implementing: given a question, produce structured findings + sources (an LLM step + a deterministic parser). A real search provider plugs in behind the same function later.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@flow/llm": "*"
+  },
+  "files": [
+    "dist"
+  ]
+}

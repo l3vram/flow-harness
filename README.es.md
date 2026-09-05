@@ -35,7 +35,7 @@ corre en un modelo fuerte, la ejecución en uno barato — configurable por tier
   verificar con evidencia, y medir convergencia por MCP), para que cualquier host MCP lo maneje.
 - **Se construye a sí mismo** — paquetes como `@flow/memory` y `@flow/review` fueron escritos por el
   harness corriendo sobre su propio repositorio, bajo revisión humana.
-- **Todo corre en Docker.** 171 tests. El núcleo es determinista — sin LLM.
+- **Todo corre en Docker.** 175 tests. El núcleo es determinista — sin LLM.
 
 ## La idea única
 
@@ -66,6 +66,7 @@ registros de decisiones de arquitectura (ADRs).
 | `@flow/git` | Worktree de git por run + gate de PR — aísla el run en su propia rama, working tree intacto |
 | `@flow/qa` | Motor de QA determinista: verificación por criterio (Capa A) + E2E web con Playwright (Capa B) + evidencia + tickets de error; lib standalone + bin `flow-qa` |
 | `@flow/verify` | Deriva criterios de QA ejecutables desde aceptación en texto libre (planner → QA): paso LLM + parse determinista |
+| `@flow/research` | Research antes de implementar: findings estructurados + fuentes desde una pregunta (LLM + parse determinista) |
 
 ## Inicio rápido (Docker)
 

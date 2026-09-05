@@ -34,7 +34,7 @@ strong model, execution on a cheap one — configured per tier.
   evidence, and check convergence over MCP), so any MCP host can drive it.
 - **Built by itself** — packages like `@flow/memory` and `@flow/review` were authored by the
   harness running on its own repository, under human review.
-- **Everything runs in Docker.** 171 tests. The core is deterministic — no LLM in it.
+- **Everything runs in Docker.** 175 tests. The core is deterministic — no LLM in it.
 
 ## The one idea
 
@@ -65,6 +65,7 @@ architecture decision records.
 | `@flow/git` | Git worktree per run + PR gate — isolates a run on its own branch, working tree untouched |
 | `@flow/qa` | Deterministic QA engine: per-criterion verification (Layer A) + web E2E via Playwright (Layer B) + evidence + error tickets; standalone lib + `flow-qa` bin |
 | `@flow/verify` | Derives executable QA criteria from free-text acceptance (planner → QA): an LLM step + a deterministic parser |
+| `@flow/research` | Research before implementing: structured findings + sources from a question (LLM + deterministic parse) |
 
 ## Quickstart (Docker)
 

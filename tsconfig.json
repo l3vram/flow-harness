@@ -15,6 +15,7 @@
     { "path": "packages/converge" },
     { "path": "packages/git" },
     { "path": "packages/qa" },
-    { "path": "packages/verify" }
+    { "path": "packages/verify" },
+    { "path": "packages/research" }
   ]
 }

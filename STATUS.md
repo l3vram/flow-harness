@@ -331,6 +331,14 @@ exhausted), diagnose from the reason and **`add_task`** a remediation (or `await
 never `complete` while critical work is blocked. **+3 tests (171 total)**, including an end-to-end run where a task
 exhausts its repair budget and blocks, the CEO adds a remediation, and it goes green. Self-built.
 
+### v0.29 — `@flow/research`: research before implementing ✅ — *self-built*
+Priority-1 research: `research(router, query, context?)` synthesizes **structured findings + sources** for a
+question (an LLM step + a deterministic parser — same shape as the planner/verify), so the CEO/executor can gather
+context before writing code. New package `@flow/research` (dep `@flow/llm`), offline-testable with a scripted
+router. **+4 tests (175 total). Self-built + dogfooded**: a real Gemini run turned an Android question (a Compose
+dark-mode toggle) into 13 concrete findings + official docs sources. Follow-ups: a real web/GitHub search provider
+behind the same function; wiring the CEO to research on uncertainty.
+
 ---
 
 ## What remains
@@ -347,10 +355,12 @@ a web app from a spec — research → plan → implement → test → launch �
 verify every requirement with **objective evidence** → branch + PR — and refuses `done` while any critical
 requirement is unverified. Passing that on several distinct projects is the bar.
 
-### Next ⬜ — Priority 1, continued
-Dynamic replanning now covers **create** (`add_task`, v0.26) and **repair→replan** (v0.28); executor failure paths
-all route to repair (v0.17/v0.27). Next: `split` / `replace` / `invalidate` a task, then **research** (search before
-implementing under uncertainty) and an **evaluation engine** (score runs objectively). See [`plans/ROADMAP.md`](plans/ROADMAP.md).
+### Next ⬜ — Priority 1 + MCP readiness
+Dynamic replanning covers create (`add_task`, v0.26) and repair→replan (v0.28); **research** shipped (v0.29). Next:
+an **evaluation engine** (score runs objectively — correctness/tests/requirements/regressions/security/cost), then
+**expose the autonomous run over MCP** (`flow_run` + a runbook) to drive feature-adds on external repos (an Android
+app is the target). Also open: `split`/`replace`/`invalidate` tasks; Android UI QA (Layer C). See
+[`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 
