@@ -4,6 +4,7 @@ import { Executor } from "@flow/executor";
 import { routerFromEnv, type ModelRouter } from "@flow/llm";
 import { Planner, type Plan } from "@flow/planner";
 import { converge } from "@flow/converge";
+import { runQA, type Criterion } from "@flow/qa";
 
 // The tool layer. Each tool is a plain object with a JSON-Schema input and a pure-ish handler
 // that operates on a Runtime. Keeping the handlers here (independent of the MCP SDK) makes them
@@ -287,6 +288,32 @@ export const tools: ToolDef[] = [
       if (typeof plan !== "object" || plan === null) throw new Error("'plan' (object) is required");
       if (typeof outcomes !== "object" || outcomes === null) throw new Error("'outcomes' (object) is required");
       return converge(plan as Plan, outcomes as Record<string, string>);
+    },
+  },
+  {
+    name: "flow_qa",
+    description:
+      "Run the deterministic QA engine: verify each acceptance criterion with its own explicit " +
+      "command, capture evidence artifacts, and return a report with per-criterion pass/fail and error " +
+      "tickets. Offline (no LLM). Emits evidence/verdicts/tickets, not decisions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        target: { type: "string", description: "Directory (or URL, later layers) under test" },
+        platform: { type: "string", description: "e.g. node | web (default node)" },
+        criteria: { type: "array", description: "Acceptance criteria: {id, description, verify[], severity?, tags?}" },
+        evidenceDir: { type: "string", description: "Optional dir for evidence artifacts" },
+      },
+      required: ["target", "criteria"],
+      additionalProperties: false,
+    },
+    handler: (_ctx, args) => {
+      const target = reqStr(args, "target");
+      const platform = optStr(args, "platform") ?? "node";
+      const criteria = args.criteria;
+      if (!Array.isArray(criteria)) throw new Error("'criteria' (array) is required");
+      const evidenceDir = optStr(args, "evidenceDir");
+      return runQA({ target, platform, criteria: criteria as Criterion[] }, evidenceDir ? { evidenceDir } : undefined);
     },
   },
 ];

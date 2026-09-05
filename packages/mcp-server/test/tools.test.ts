@@ -79,6 +79,27 @@ describe("mcp tool handlers", () => {
     expect(res.summary).toContain("1/2 green");
   });
 
+  it("flow_qa runs the QA engine and returns a report with tickets", () => {
+    const target = mkdtempSync(join(tmpdir(), "flow-qa-mcp-target-"));
+    const evidenceDir = mkdtempSync(join(tmpdir(), "flow-qa-mcp-ev-"));
+    try {
+      const res = getTool("flow_qa").handler(ctx, {
+        target,
+        evidenceDir,
+        criteria: [
+          { id: "ok", description: "passes", verify: ["node", "-e", "process.exit(0)"] },
+          { id: "bad", description: "fails", verify: ["node", "-e", "process.exit(1)"], severity: "critical" },
+        ],
+      }) as { complete: boolean; summary: string; criteria: Array<{ id: string; status: string; tickets: unknown[] }> };
+      expect(res.complete).toBe(false);
+      expect(res.summary).toBe("1/2 pass");
+      expect(res.criteria.find((c) => c.id === "bad")?.tickets).toHaveLength(1);
+    } finally {
+      rmSync(target, { recursive: true, force: true });
+      rmSync(evidenceDir, { recursive: true, force: true });
+    }
+  });
+
   describe("flow_execute", () => {
     let targetDir: string;
     let router: ModelRouter;

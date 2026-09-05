@@ -4,6 +4,6 @@
     "outDir": "dist",
     "rootDir": "src"
   },
-  "references": [{ "path": "../core" }, { "path": "../executor" }, { "path": "../llm" }, { "path": "../planner" }, { "path": "../converge" }],
+  "references": [{ "path": "../core" }, { "path": "../executor" }, { "path": "../llm" }, { "path": "../planner" }, { "path": "../converge" }, { "path": "../qa" }],
   "include": ["src/**/*"]
 }

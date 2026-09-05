@@ -249,6 +249,16 @@ The first brick of the QA engine ([ADR 0007](docs/decisions/0007-qa-independent-
 - ✅ bin `flow-qa <target> <request.json>` (exit ≠0 unless complete) — a drop-in system verifier, proven standalone.
 - ✅ **Self-built** by `flow-run` in a single clean pass. **+4 tests (151 total).**
 
+### v0.19 — `flow_qa` over MCP ✅ — *self-built, dogfooded*
+The QA engine is now reachable from any MCP host (opencode/Cursor/Claude) as a standalone tool — the
+"usable independently" half of ADR 0007. `flow_qa` (14th tool) runs `@flow/qa`'s `runQA` (offline, run-less)
+and returns the report + tickets. **Dogfooded**: the increment was accepted only after `flow-qa` itself
+verified it (`{build, mcp-server-tests, qa-tests}` → 3/3 pass, evidence on disk) — the harness's first real
+Requirement→Evidence→Done. **+1 test (152 total).**
+*(Two robustness findings from the first, blocked attempt: adding a dep on a newly-created workspace package
+needs `npm install`/the node_modules symlink before the auto-build; and the executor drifts out of file scope
+under repair pressure. Both queued as executor/build-hygiene work.)*
+
 ---
 
 ## What remains
@@ -266,11 +276,10 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 0: QA Engine, continued
-Layer A (deterministic per-criterion verification + evidence + tickets) shipped in v0.18. Next: **Layer B —
-Playwright web E2E** (launch the app, drive flows, capture screenshots/traces/console/network), then expose
-**`flow_qa` over MCP** and **wire QA into the orchestrator** so tickets feed the **CEO**'s repair loop until
-green. Then: requirement→verification graph → strong convergence → dynamic replanning → … (see
-[`plans/ROADMAP.md`](plans/ROADMAP.md)).
+Layer A (v0.18) and `flow_qa` over MCP (v0.19) shipped. Next: **wire QA into the orchestrator** — `flow-run`
+uses `flow-qa` as its verify/evidence step and the tickets feed the **CEO**'s repair loop (the deep dogfood) —
+and **Layer B — Playwright web E2E** (screenshots/traces/console/network). Then: requirement→verification graph
+→ strong convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
 
 ---
 

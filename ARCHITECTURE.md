@@ -133,7 +133,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `@flow/core` | Event-sourced runtime: event log, projection, Kahn scheduler, state machine + circuit breaker, ledger, gates. **No LLM.** | — | ✅ v0.1 |
 | `@flow/cli` | The `flow` binary; a drop-in for `flow.sh`. | core | ✅ v0.1 |
-| `@flow/mcp-server` | MCP server exposing 13 high-level `flow_*` tools (incl. `flow_execute`, and `flow_spec`/`flow_converge` — the SDD planner + convergence over MCP); any host can drive a run. | core, MCP SDK | ✅ v0.4 / v0.16 |
+| `@flow/mcp-server` | MCP server exposing 14 high-level `flow_*` tools (incl. `flow_execute`, `flow_spec`/`flow_converge`, and `flow_qa` — the QA engine over MCP); any host can drive a run. | core, MCP SDK | ✅ v0.4 / v0.16 / v0.19 |
 | `@flow/llm` | Provider-neutral inference: `LLMProvider`, `FakeProvider`, `OpenAICompatibleProvider`, `AnthropicProvider`, `ModelRouter`, `routerFromEnv`. Per-tier provider/model, retry/backoff, and **automatic fallback** (a tier's primary fails → auto-switch to its backup). Zero deps. | — | ✅ v0.2 / v0.2.4 |
 | `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
@@ -191,8 +191,9 @@ for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and t
 multi-LLM run), the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
 self-built), and the **executor is hardened** (atomic apply; a total provider failure blocks the task instead of
 aborting the run — v0.17, self-built), and the **QA engine has its deterministic first layer** (`@flow/qa` —
-per-criterion evidence + error tickets, standalone, v0.18, self-built). Next: **QA Layer B (Playwright web)** +
-wiring tickets into a CEO-driven fix loop, then an **evaluation harness** (score runs against acceptance) ·
+per-criterion evidence + error tickets, standalone, v0.18; reachable over MCP as `flow_qa`, v0.19, self-built &
+dogfooded). Next: **wire QA into the orchestrator** (flow-run verifies with flow-qa; tickets → CEO fix loop) +
+**QA Layer B (Playwright web)**, then an **evaluation harness** (score runs against acceptance) ·
 **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.
 The prioritized execution plan (17 capabilities, dependency-ordered, status-tagged) and the project's

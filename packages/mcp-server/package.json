@@ -15,6 +15,7 @@
     "@flow/executor": "*",
     "@flow/llm": "*",
     "@flow/planner": "*",
+    "@flow/qa": "*",
     "@modelcontextprotocol/sdk": "^1.12.0"
   },
   "files": [
