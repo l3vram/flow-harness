@@ -14,9 +14,30 @@ Copy `.env.example` to `.env` and set a real backend per tier (e.g. Gemini for `
 tiers). The autonomous run needs a real LLM; see the README for the `FLOW_LLM_*` vars.
 
 ## 3. Register the MCP server in your host
-The server speaks the Model Context Protocol over **stdio**. Launch it with the `flow-mcp` bin
-(`node packages/mcp-server/dist/stdio.js`). Register that command in your host's MCP config so its `flow_*` tools
-appear. Run it **locally** (not in Docker) when the target needs local toolchains (e.g. the Android SDK for Gradle).
+The server speaks the Model Context Protocol over **stdio** (no HTTP URL yet — a host connects by *launching a
+command*, not by a URL). Run it **locally** (not in Docker) so the machine's toolchains (Android SDK / Gradle) are
+available to the executor and the QA verify.
+
+Use the launcher `scripts/flow-mcp.sh` — it loads your provider keys from `.env` (so they never go into the host's
+config) and execs the stdio server.
+
+**opencode** — add to `opencode.json` (replace the absolute path with yours). `timeout` matters: a `flow_run` runs a
+whole autonomous loop (minutes), and opencode's MCP timeout defaults to 5000 ms — raise it:
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "flow": {
+      "type": "local",
+      "command": ["/ABSOLUTE/PATH/TO/flow-harness/scripts/flow-mcp.sh"],
+      "enabled": true,
+      "timeout": 600000
+    }
+  }
+}
+```
+(Other stdio MCP hosts use the same idea: a `command` pointing at `scripts/flow-mcp.sh`.) After registering, the
+host lists 15 `flow_*` tools including `flow_run`.
 
 ## 4. Drive a run
 Call the `flow_run` tool with your objective and the target repo:
