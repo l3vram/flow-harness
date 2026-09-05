@@ -13,6 +13,7 @@
     { "path": "../memory" },
     { "path": "../review" },
     { "path": "../planner" },
+    { "path": "../qa" },
     { "path": "../git" }
   ],
   "include": ["src/**/*"]

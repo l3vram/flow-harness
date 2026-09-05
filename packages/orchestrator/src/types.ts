@@ -2,6 +2,7 @@ import type { Tier, Status } from "@flow/core";
 import type { CeoDecision } from "@flow/ceo";
 import type { VerifyResult } from "@flow/executor";
 import type { RiskAssessment } from "@flow/review";
+import type { Criterion, QAReport } from "@flow/qa";
 
 /** One task the orchestrator can dispatch: registered with the runtime and handed to the executor. */
 export interface TaskSpec {
@@ -11,6 +12,13 @@ export interface TaskSpec {
   deps?: string[];
   instruction: string;
   verify?: string[];
+  /**
+   * Acceptance criteria verified by @flow/qa after the executor writes. When present, the QA report's
+   * `complete` (not a single verify command) decides the task, and its tickets drive the repair loop.
+   */
+  criteria?: Criterion[];
+  /** Platform hint passed to QA (e.g. "node" | "web"). */
+  platform?: string;
 }
 
 export interface OrchestratorOptions {
@@ -28,6 +36,8 @@ export interface TaskOutcome {
   reason: string;
   risk?: RiskAssessment;
   attempts?: number;
+  /** The QA report, when the task was verified by acceptance criteria. */
+  qa?: QAReport;
 }
 
 /** The full record of one autonomous run: every CEO decision and every task's final outcome. */

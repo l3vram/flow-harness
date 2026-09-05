@@ -138,7 +138,7 @@ stateDiagram-v2
 | `@flow/ceo` | Executive loop: observe state → decide next move via the LLM, **with recalled lessons + repo context in its prompt**. Never edits code. | core, llm | ✅ v0.3 |
 | `@flow/context` | Deterministic, LLM-free repo index + relevance ranking + token-budgeted context bundles. | — | ✅ v0.5 |
 | `@flow/executor` | Writes **and edits** (safe search/replace) code, then runs the verify command. The only writer of product code. | llm, context | ✅ v0.6 |
-| `@flow/orchestrator` | The conductor: CEO → executor → runtime, with a **repair loop** (retry a failed verify by feeding the error back), **risk gating** (high-risk → human review), and lesson recording. `flow-run <config.json>`. | core, ceo, executor, llm, context, memory, review | ✅ v0.7 |
+| `@flow/orchestrator` | The conductor: CEO → executor → runtime, with a **repair loop** (retry a failed verify by feeding the error back), **risk gating** (high-risk → human review), lesson recording, and **QA-verified tasks** (a task with acceptance criteria is verified by `@flow/qa`; its report decides green/blocked and its tickets drive the repair loop). `flow-run <config.json>`. | core, ceo, executor, llm, context, memory, review, qa | ✅ v0.7 / v0.20 |
 | `@flow/memory` | Append-only lessons store + relevance search (reuses the context tokenizer) — the CEO's memory across runs. `flow-run` records one lesson per run. **Authored by the harness itself.** | context | ✅ v0.8 |
 | `@flow/review` | Deterministic risk/review engine: `assessRisk` → level, review depth, model tier, human gate. **Self-built.** | — | ✅ v0.9 |
 | `@flow/planner` | Spec-Driven Development planner (GitHub Spec Kit): objective → spec (requirements + acceptance + clarifications) → ordered task DAG with per-task verify. **Self-built (CEO on Gemini).** Wired into `flow-run` (objective → plan → gate → execute). | llm | ✅ v0.12 |
@@ -191,9 +191,10 @@ for a PR gate — all proven against real backends (Groq, Gemini, Mistral, and t
 multi-LLM run), the **planner + convergence are exposed over MCP** (`flow_spec`/`flow_converge`, v0.16,
 self-built), and the **executor is hardened** (atomic apply; a total provider failure blocks the task instead of
 aborting the run — v0.17, self-built), and the **QA engine has its deterministic first layer** (`@flow/qa` —
-per-criterion evidence + error tickets, standalone, v0.18; reachable over MCP as `flow_qa`, v0.19, self-built &
-dogfooded). Next: **wire QA into the orchestrator** (flow-run verifies with flow-qa; tickets → CEO fix loop) +
-**QA Layer B (Playwright web)**, then an **evaluation harness** (score runs against acceptance) ·
+per-criterion evidence + error tickets, standalone, v0.18; reachable over MCP as `flow_qa`, v0.19; and **wired
+into the autonomous loop** — a task's acceptance criteria are QA-verified, its report decides green/blocked and
+its tickets drive the repair loop, v0.20, dogfooded end-to-end). Next: **QA Layer B (Playwright web)**, then an
+**evaluation harness** (score runs against acceptance) ·
 **controlled learning** (promote lessons) · **graph memory** · MCP resources & apps · remote deployment. The end state: point the harness at its own repository and let it build its next
 increments — which only works because the spine beneath it is deterministic, resumable and auditable.
 The prioritized execution plan (17 capabilities, dependency-ordered, status-tagged) and the project's

@@ -259,6 +259,15 @@ Requirement→Evidence→Done. **+1 test (152 total).**
 needs `npm install`/the node_modules symlink before the auto-build; and the executor drifts out of file scope
 under repair pressure. Both queued as executor/build-hygiene work.)*
 
+### v0.20 — QA wired into the orchestrator ✅ — *self-built, dogfooded end to end*
+The autonomous loop now **verifies with QA**. A `TaskSpec` may carry acceptance `criteria`; when it does, the
+executor writes without a redundant verify command, the orchestrator runs `runQA` against the target, and the
+report's `complete` (not a single exit code) decides green/blocked — its **tickets** drive the repair loop.
+Backward compatible (no criteria → unchanged). Evidence goes to a temp dir, so a self-build never dirties the tree.
+- ✅ **+2 tests (154 total)**; **self-built** by `flow-run` in one clean pass.
+- ✅ **Dogfooded end to end**: a real `flow-run` whose task carried `criteria` went **green on the QA verdict**
+  (`qa.complete`, report attached) — the first time the loop's accept decision was made by the QA engine.
+
 ---
 
 ## What remains
@@ -276,10 +285,10 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜ — Priority 0: QA Engine, continued
-Layer A (v0.18) and `flow_qa` over MCP (v0.19) shipped. Next: **wire QA into the orchestrator** — `flow-run`
-uses `flow-qa` as its verify/evidence step and the tickets feed the **CEO**'s repair loop (the deep dogfood) —
-and **Layer B — Playwright web E2E** (screenshots/traces/console/network). Then: requirement→verification graph
-→ strong convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
+Layer A (v0.18), `flow_qa` over MCP (v0.19), and QA wired into the orchestrator (v0.20) shipped. Next: **Layer B —
+Playwright web E2E** (screenshots/traces/console/network), then **derive criteria from the planner's
+`spec.acceptance`** and **run-scoped evidence under `FLOW_HOME`**. Then: requirement→verification graph → strong
+convergence → dynamic replanning → … (see [`plans/ROADMAP.md`](plans/ROADMAP.md)).
 
 ---
 

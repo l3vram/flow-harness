@@ -197,6 +197,47 @@ describe("Orchestrator", () => {
     expect(readFileSync(join(targetDir, "out.txt"), "utf8").trim()).toBe("GOOD");
   });
 
+  it("QA-verified task: passing criteria -> green with a QA report attached", async () => {
+    const runtime = Runtime.init(runDir, "rqa1", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a", criteria: [{ id: "c1", description: "exits 0", verify: ["node", "-e", "process.exit(0)"] }] }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.outcomes.a?.status).toBe("green");
+    expect(report.outcomes.a?.qa?.complete).toBe(true);
+    expect(report.outcomes.a?.attempts).toBe(1);
+  });
+
+  it("QA-verified task: a failing criterion -> blocked with tickets, run does not complete", async () => {
+    const runtime = Runtime.init(runDir, "rqa2", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a", criteria: [{ id: "c1", description: "must exit 0", verify: ["node", "-e", "process.exit(1)"], severity: "critical" }] }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "await_human"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.completed).toBe(false);
+    expect(report.outcomes.a?.status).toBe("blocked");
+    expect(report.outcomes.a?.qa?.complete).toBe(false);
+    const tickets = report.outcomes.a?.qa?.criteria.flatMap((c) => c.tickets) ?? [];
+    expect(tickets.length).toBeGreaterThan(0);
+    expect(tickets[0]?.severity).toBe("critical");
+  });
+
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
     const runtime = Runtime.init(runDir, "r6", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

@@ -18,6 +18,7 @@
     "@flow/memory": "*",
     "@flow/review": "*",
     "@flow/planner": "*",
+    "@flow/qa": "*",
     "@flow/git": "*"
   },
   "files": [
