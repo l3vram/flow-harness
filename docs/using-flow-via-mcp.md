@@ -48,6 +48,24 @@ whole autonomous loop (minutes), and opencode's MCP timeout defaults to 5000 ms 
 (Other stdio MCP hosts use the same idea: a `command` pointing at `scripts/flow-mcp.sh`.) After registering, the
 host lists 15 `flow_*` tools including `flow_run`.
 
+**Zero-clone via npx (from GitHub).** A host that just wants to *run* the server — no clone, no `npm run build` —
+can launch it straight from GitHub. `npm` clones the repo, builds it, and runs a single self-contained bundle
+(`bin/flow-mcp.mjs`, the whole `@flow` graph + the MCP SDK inlined):
+```json
+{ "mcp": { "flow": { "type": "local",
+  "command": ["npx", "-y", "github:l3vram/flow-harness", "flow-mcp"],
+  "enabled": true, "timeout": 600000 } } }
+```
+Trade-off: the npx bin does **not** source your `.env` (that is the launcher's job), so the host/shell must supply
+the `FLOW_LLM_*` provider vars itself. Use `scripts/flow-mcp.sh` when you want keys loaded from `.env`
+automatically; use npx when the host already injects the env and you want nothing checked out locally. The first
+launch builds (a few seconds, cached after); pin a release with `github:l3vram/flow-harness#v0.32.0`.
+
+**Claude Code (this repo).** `.mcp.json` at the repo root already registers `flow` (via `bash scripts/flow-mcp.sh`,
+which sources `.env` and runs the live `dist/` so it always reflects the newest working tree). Claude Code picks it
+up on the **next session / reload** and asks you to **approve** the server before its tools are usable — approve it
+once, then the `flow_*` tools are available in-session (this is how the harness dogfoods itself).
+
 ## 4. Drive a run
 Call the `flow_run` tool with your objective and the target repo:
 ```json
