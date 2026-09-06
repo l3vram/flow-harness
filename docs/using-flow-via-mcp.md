@@ -21,7 +21,16 @@ available to the executor and the QA verify.
 Use the launcher `scripts/flow-mcp.sh` — it loads your provider keys from `.env` (so they never go into the host's
 config) and execs the stdio server.
 
-**opencode** — add to `opencode.json` (replace the absolute path with yours). `timeout` matters: a `flow_run` runs a
+**opencode — one command (no JSON to hand-edit):**
+```bash
+./scripts/install-opencode-mcp.sh          # merges a "flow" entry into ~/.config/opencode/opencode.json
+# or a specific config:  OPENCODE_CONFIG=./opencode.json ./scripts/install-opencode-mcp.sh
+```
+It preserves everything else in your config and is safe to re-run. Then reload opencode and **just talk to it** —
+e.g. *"use flow to add a dark-mode toggle to my app at /path/to/app; acceptPlan, verify with ./gradlew testDebugUnitTest."*
+opencode calls the `flow_run` tool for you; you never paste JSON again.
+
+**opencode — manual (equivalent):** add to `opencode.json` (replace the absolute path with yours). `timeout` matters: a `flow_run` runs a
 whole autonomous loop (minutes), and opencode's MCP timeout defaults to 5000 ms — raise it:
 ```json
 {
