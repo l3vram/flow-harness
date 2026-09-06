@@ -357,6 +357,13 @@ app with Gradle QA criteria. **+3 tests (182 total). Self-built + proven live**:
 planned, created the target file, ran QA, and reported. *Finding:* auto-derived acceptance criteria can be
 over-strict and block a correct result — prefer an explicit `verifyCommand`/`tasks` for reliable runs.
 
+### v0.32 — evaluate every run (self-score) ✅ — *self-built*
+The v0.30 evaluation engine is now wired into the loop: `evaluateRunReport` builds an `EvalInput` from a finished
+run (task statuses, QA criteria passed, critical tickets, attempts) and the orchestrator attaches the deterministic
+`EvaluationReport` to every `RunReport`. Each autonomous run now **self-scores** 0–100 across five dimensions — the
+foundation for learning and comparing versions. **+3 tests (185 total). Self-built + demonstrated**: a run with a
+blocked task + a failed criterion + a critical ticket scored 40/100, reflecting each.
+
 ---
 
 ## What remains
@@ -374,11 +381,10 @@ verify every requirement with **objective evidence** → branch + PR — and ref
 requirement is unverified. Passing that on several distinct projects is the bar.
 
 ### Next ⬜
-`flow_run` over MCP shipped (v0.31) — a host (opencode/Cursor/Claude) can now drive a feature-add on an external
-repo; verify with an explicit `verifyCommand` (Gradle for Android). Open: **Android UI QA (Layer C)** (an
-emulator/device driver); more robust auto-derived criteria; `split`/`replace`/`invalidate` tasks; wiring research
-into the loop; an HTTP MCP transport; a helper that builds `EvalInput` from a `RunReport`. See
-[`plans/ROADMAP.md`](plans/ROADMAP.md).
+Every run now self-scores (v0.32) and `flow_run` is drivable over MCP (v0.31). Open Priority-1/adjacent:
+`split`/`replace`/`invalidate` tasks; **wiring research into the loop** (the CEO researches on uncertainty);
+**Android UI QA (Layer C)**; more robust auto-derived criteria; an **HTTP MCP transport**; **publishing the MCP as
+an npx package**. See [`plans/ROADMAP.md`](plans/ROADMAP.md).
 
 ---
 

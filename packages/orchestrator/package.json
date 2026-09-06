@@ -10,16 +10,17 @@
     "flow-run": "dist/cli.js"
   },
   "dependencies": {
-    "@flow/core": "*",
     "@flow/ceo": "*",
-    "@flow/executor": "*",
-    "@flow/llm": "*",
     "@flow/context": "*",
+    "@flow/core": "*",
+    "@flow/eval": "*",
+    "@flow/executor": "*",
+    "@flow/git": "*",
+    "@flow/llm": "*",
     "@flow/memory": "*",
-    "@flow/review": "*",
     "@flow/planner": "*",
     "@flow/qa": "*",
-    "@flow/git": "*",
+    "@flow/review": "*",
     "@flow/verify": "*"
   },
   "files": [

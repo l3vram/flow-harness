@@ -3,6 +3,7 @@ import type { CeoDecision } from "@flow/ceo";
 import type { VerifyResult } from "@flow/executor";
 import type { RiskAssessment } from "@flow/review";
 import type { Criterion, QAReport } from "@flow/qa";
+import type { EvaluationReport } from "@flow/eval";
 
 /** One task the orchestrator can dispatch: registered with the runtime and handed to the executor. */
 export interface TaskSpec {
@@ -50,6 +51,8 @@ export interface RunReport {
   decisions: CeoDecision[];
   outcomes: Record<string, TaskOutcome>;
   tasks: { id: string; status: Status }[]; // final status of every task
+  /** Deterministic self-evaluation of the run (score + dimensions). */
+  evaluation?: EvaluationReport;
 }
 
 /** The on-disk config the CLI reads to start a run. */

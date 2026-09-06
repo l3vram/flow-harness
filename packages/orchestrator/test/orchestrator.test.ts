@@ -336,6 +336,25 @@ describe("Orchestrator", () => {
     expect(report.outcomes["a-fix"]?.status).toBe("green");
   });
 
+  it("attaches a deterministic self-evaluation to the run report", async () => {
+    const runtime = Runtime.init(runDir, "reval", "obj");
+    runtime.addTask("a", "backend", "sonnet", []);
+
+    const specs = new Map<string, TaskSpec>([
+      ["a", { id: "a", role: "backend", tier: "sonnet", deps: [], instruction: "do a" }],
+    ]);
+
+    const ceo = new Ceo(runtime, ceoRouter(["dispatch", "complete"]));
+    const executor = new Executor(execRouter([{ path: "out.txt", content: "x" }]), {});
+
+    const orchestrator = new Orchestrator(runtime, ceo, executor, specs, { targetDir });
+    const report = await orchestrator.run();
+
+    expect(report.evaluation).toBeDefined();
+    expect(typeof report.evaluation?.score).toBe("number");
+    expect(report.evaluation?.dimensions).toHaveLength(5);
+  });
+
   it("repair budget exhausted: a task that never passes verify stays blocked after the max tries", async () => {
     const runtime = Runtime.init(runDir, "r6", "obj");
     runtime.addTask("a", "backend", "sonnet", []);

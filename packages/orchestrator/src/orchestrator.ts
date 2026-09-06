@@ -6,6 +6,7 @@ import type { Executor } from "@flow/executor";
 import { ContextEngine } from "@flow/context";
 import { assessRisk } from "@flow/review";
 import { runQA, type QAReport } from "@flow/qa";
+import { evaluateRunReport } from "./evaluate-run.js";
 import type { OrchestratorOptions, RunReport, TaskOutcome, TaskSpec } from "./types.js";
 
 const DEFAULT_MAX_STEPS = 20;
@@ -151,7 +152,7 @@ export class Orchestrator {
     }
 
     const state = this.runtime.state;
-    return {
+    const report: RunReport = {
       runId: state.run,
       objective: state.objective,
       completed,
@@ -159,6 +160,8 @@ export class Orchestrator {
       outcomes,
       tasks: state.plans.map((p) => ({ id: p.id, status: p.status })),
     };
+    report.evaluation = evaluateRunReport(report);
+    return report;
   }
 
   /** Assembles repo context for an instruction, or "" when no contextRoot was configured. */
