@@ -1,15 +1,23 @@
 {
   "name": "flow-harness",
-  "version": "0.32.0",
-  "private": true,
+  "version": "0.33.0",
   "type": "module",
   "description": "LLM-agnostic software engineering harness — deterministic, resumable, event-sourced runtime core.",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "github:l3vram/flow-harness"
   },
   "bin": {
     "flow-mcp": "bin/flow-mcp.mjs"
+  },
+  "files": [
+    "bin/flow-mcp.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "workspaces": [
     "packages/*"
@@ -19,6 +27,7 @@
     "clean": "tsc -b --clean",
     "bundle": "node scripts/bundle-mcp.mjs",
     "prepare": "npm run build && npm run bundle",
+    "prepublishOnly": "npm run build && npm run bundle",
     "test": "npm run build && vitest run",
     "test:watch": "vitest",
     "flow": "node packages/cli/dist/cli.js"

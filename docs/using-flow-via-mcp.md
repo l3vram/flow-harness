@@ -13,6 +13,26 @@ npm run build   # tsc -b
 Copy `.env.example` to `.env` and set a real backend per tier (e.g. Gemini for `opus`/CEO, Groq for the executor
 tiers). The autonomous run needs a real LLM; see the README for the `FLOW_LLM_*` vars.
 
+## Verify the install: `flow-mcp doctor`
+
+Right after setting your `.env` keys and before the first `flow_run`, run the built-in
+self-diagnostic:
+
+```bash
+node bin/flow-mcp.mjs doctor     # or `flow-mcp doctor` once installed
+```
+
+It reports, and exits non-zero on any failing critical check:
+
+- **node** — Node >= 22 is required.
+- **llm:haiku / llm:sonnet / llm:opus** — the provider each tier resolves to from your env. A
+  `!` is the offline `fake` provider (no real backend); a real provider with a missing API key
+  is a failure — set `FLOW_LLM_<TIER>_API_KEY` (or the blanket `FLOW_LLM_API_KEY`).
+- **git / playwright** — optional toolchains (`!` if absent); Playwright is only needed for web QA.
+- **tools** — confirms the 15 `flow_*` tools are wired into the binary.
+
+`flow-mcp --version` and `flow-mcp --help` are also available.
+
 ## 3. Register the MCP server in your host
 The server speaks the Model Context Protocol over **stdio** (no HTTP URL yet — a host connects by *launching a
 command*, not by a URL). Run it **locally** (not in Docker) so the machine's toolchains (Android SDK / Gradle) are

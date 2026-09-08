@@ -15,6 +15,10 @@ const entry = resolve(root, 'packages/mcp-server/dist/stdio.js');
 const outfile = resolve(root, 'bin/flow-mcp.mjs');
 const SHEBANG = '#!/usr/bin/env node';
 
+// The version is injected into the bundle so `flow-mcp --version`/`doctor` can report it
+// without reading package.json at runtime (it is not shipped next to the bundle).
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+
 mkdirSync(dirname(outfile), { recursive: true });
 
 await build({
@@ -24,6 +28,7 @@ await build({
   platform: 'node',
   format: 'esm',
   target: 'node22',
+  define: { __FLOW_VERSION__: JSON.stringify(pkg.version) },
   // Optional web-E2E dependency — kept external so a run without it still starts.
   external: ['playwright', 'playwright-core'],
   logLevel: 'info',

@@ -364,6 +364,23 @@ run (task statuses, QA criteria passed, critical tickets, attempts) and the orch
 foundation for learning and comparing versions. **+3 tests (185 total). Self-built + demonstrated**: a run with a
 blocked task + a failed criterion + a critical ticket scored 40/100, reflecting each.
 
+### v0.33 — clean distribution + `flow-mcp doctor` ✅ — *doctor self-built via flow-run; packaging/docs direct*
+Makes the harness **usable outside this console**: installable in one command and self-verifiable
+before use.
+- ✅ **`flow-mcp doctor`** — an offline self-diagnostic subcommand on the bundled binary: checks Node
+  ≥22, per-tier LLM provider/key resolution (haiku/sonnet/opus, mirroring `routerFromEnv`), optional
+  toolchains (git/playwright), and that the 15 `flow_*` tools are wired; exits non-zero on any failing
+  critical check. Adds `flow-mcp --version`/`--help`; the version is injected into the bundle via
+  esbuild `define`. **Self-built by `flow-run`** (both tasks green, eval **99/100**) — the run
+  paraphrased the Node check into a no-op (always "ok"); the human supervisor **caught and fixed it at
+  Gate B** and added a version-injectable seam so the fail branch is now tested. **+6 tests (191 total).**
+- ✅ **Publish-ready package** — root `package.json` is no longer `private`, version `0.33.0`, MIT
+  `LICENSE`, and a `files` allowlist that ships **only** the self-contained `bin/flow-mcp.mjs` + READMEs +
+  LICENSE (verified via `npm pack --dry-run`: no sources, no `node_modules`, no `.env`). `prepublishOnly`
+  rebuilds the bundle. **`npm publish` is deliberately left to the maintainer.**
+- ✅ **Docs** — install path (`npx github:…` today, `npm i -g` once published) + a `doctor` reference in
+  `README.md`, `README.es.md`, and the MCP runbook.
+
 ---
 
 ## What remains

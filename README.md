@@ -37,6 +37,43 @@ strong model, execution on a cheap one — configured per tier.
   harness running on its own repository, under human review.
 - **Everything runs in Docker.** 185 tests. The core is deterministic — no LLM in it.
 
+## Install (use it outside this repo)
+
+flow-harness ships as a single self-contained MCP server binary, `flow-mcp` — the whole
+`@flow/*` graph plus the MCP SDK bundled into one file, so any MCP host can launch it.
+
+**Today (from GitHub — no npm account needed):**
+
+```bash
+npx github:l3vram/flow-harness flow-mcp doctor   # verify the install
+npx github:l3vram/flow-harness flow-mcp          # start the MCP stdio server
+```
+
+The `github:` install runs the `prepare` script, which rebuilds the bundle on your machine.
+
+**Once published to npm (a maintainer step):**
+
+```bash
+npm i -g flow-harness      # then: flow-mcp doctor
+# or one-off:  npx flow-harness flow-mcp
+```
+
+### Check your install: `flow-mcp doctor`
+
+`flow-mcp doctor` runs an offline self-diagnostic and exits non-zero if something critical is
+wrong — run it before pointing the server at a repo:
+
+- **node** — requires Node >= 22 (fails if older).
+- **llm:haiku / llm:sonnet / llm:opus** — the provider each tier resolves to. `!` means the
+  offline `fake` provider (no real backend); a real provider without an API key is a failure.
+  Set `FLOW_LLM_<TIER>_API_KEY` (or the blanket `FLOW_LLM_API_KEY`).
+- **git / playwright** — optional toolchains (`!` if absent); Playwright is only needed for web
+  QA (Layer B).
+- **tools** — confirms the 15 `flow_*` tools are wired into the binary.
+
+Exit code `0` = ready (warnings allowed); `1` = a failing check must be fixed first.
+`flow-mcp --version` and `flow-mcp --help` are also available.
+
 ## The one idea
 
 **Deterministic control flow lives in code; judgment lives in the LLM.** State is an event-sourced
