@@ -75,6 +75,24 @@ mal — córrelo antes de apuntar el servidor a un repo:
 Código de salida `0` = listo (los warnings no bloquean); `1` = hay que arreglar un check en falla.
 `flow-mcp --version` y `flow-mcp --help` también están disponibles.
 
+### Úsalo desde tu editor (opencode, Cursor, Claude Code)
+
+Registra el server una vez y luego solo háblale a tu editor — él llama a la tool `flow_run` por ti (el
+server envía sus propias instrucciones de uso, así no escribes parámetros a mano):
+
+```bash
+# desde tu checkout de flow-harness — un comando:
+npm install && npm run build && ./scripts/install-opencode-mcp.sh   # luego recarga opencode
+```
+
+Después, en tu editor abierto en tu app:
+
+> Usa **flow** para añadir &lt;una feature chica, testeable con unit tests&gt; a mi app en `/ruta/abs/a/la/app`,
+> en una rama aislada, y verifica con Gradle (`./gradlew :app:testDebugUnitTest`). Muéstrame el plan primero.
+
+flow trabaja en una rama `flow/<runId>` (nunca toca tu working tree), corre tu comando de verify como
+**evidencia**, y te devuelve el report. **Guía paso a paso completa:** [`docs/using-flow-via-mcp.md`](docs/using-flow-via-mcp.md).
+
 ## La idea única
 
 **El control determinista vive en código; el juicio vive en el LLM.** El estado es una proyección

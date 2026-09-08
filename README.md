@@ -74,6 +74,24 @@ wrong — run it before pointing the server at a repo:
 Exit code `0` = ready (warnings allowed); `1` = a failing check must be fixed first.
 `flow-mcp --version` and `flow-mcp --help` are also available.
 
+### Drive it from your editor (opencode, Cursor, Claude Code)
+
+Register the server once, then just talk to your editor — it calls the `flow_run` tool for you (the
+server ships its own usage instructions, so you don't hand-write parameters):
+
+```bash
+# from your flow-harness checkout — one command:
+npm install && npm run build && ./scripts/install-opencode-mcp.sh   # then reload opencode
+```
+
+Then, in your editor open on your app:
+
+> Use **flow** to add &lt;a small, unit-testable feature&gt; to my app at `/abs/path/to/app`, on an
+> isolated branch, and verify with Gradle (`./gradlew :app:testDebugUnitTest`). Show me the plan first.
+
+flow works on a `flow/<runId>` branch (it never touches your working tree), runs your verify command as
+**evidence**, and reports back. **Full step-by-step guide:** [`docs/using-flow-via-mcp.md`](docs/using-flow-via-mcp.md).
+
 ## The one idea
 
 **Deterministic control flow lives in code; judgment lives in the LLM.** State is an event-sourced

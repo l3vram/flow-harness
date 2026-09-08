@@ -1,57 +1,177 @@
-# Using flow via MCP (drive a feature-add on an external repo)
+# Using flow via MCP — add a feature to your app and let it verify the work
 
-flow-harness can be driven by any MCP host (opencode, Cursor, Claude) as an **MCP server**, so you can point it
-at a repository and have it add a feature end to end: plan -> implement -> verify (QA) -> report.
+flow-harness runs as an **MCP server**, so any MCP host (opencode, Cursor, Claude Code) can point it
+at one of your repos and have it add a feature end to end:
 
-## 1. Build
+> **plan → write the code → run your tests (QA) → collect evidence → report** — on an isolated branch.
+
+You talk to your host in plain language ("use flow to add X to my app"); the host calls the `flow_run`
+tool for you. You never hand-write JSON.
+
+---
+
+## What you need (once)
+
+- **Node ≥ 22** and **git** on your machine.
+- **flow-harness** checked out somewhere (call that path `FLOW_DIR`).
+- **Provider keys**: copy `.env.example` to `.env` in `FLOW_DIR` and set a real LLM backend per tier
+  (e.g. Gemini for the `opus`/planner tier, Groq for the `sonnet`/`haiku` executor tiers). The keys stay
+  in that `.env` — they never go into your host's config. See the README for the `FLOW_LLM_*` variables.
+
+---
+
+## 1. Install flow into opencode
+
+**One command** (from `FLOW_DIR`):
+
 ```bash
-npm install
-npm run build   # tsc -b
+npm install && npm run build          # build the server once
+./scripts/install-opencode-mcp.sh     # register "flow" in ~/.config/opencode/opencode.json
 ```
 
-## 2. Provider keys
-Copy `.env.example` to `.env` and set a real backend per tier (e.g. Gemini for `opus`/CEO, Groq for the executor
-tiers). The autonomous run needs a real LLM; see the README for the `FLOW_LLM_*` vars.
+The script only adds a `flow` entry (it keeps everything else in your config) and is safe to re-run.
+Prefer it scoped to one project? Run it from that project with `OPENCODE_CONFIG=./opencode.json ./scripts/install-opencode-mcp.sh`.
 
-## Verify the install: `flow-mcp doctor`
+**Or ask opencode to install it for you** — paste this into opencode:
 
-Right after setting your `.env` keys and before the first `flow_run`, run the built-in
-self-diagnostic:
+> Install the **flow** MCP server. Run exactly this and show me the output:
+> ```bash
+> cd FLOW_DIR && npm install && npm run build && ./scripts/install-opencode-mcp.sh && ( set -a; . ./.env; set +a; node packages/mcp-server/dist/stdio.js doctor )
+> ```
+> If the doctor ends with exit 0 and shows `✓ tools  15 flow_* tools wired`, tell me it's installed and
+> remind me to reload opencode. If anything fails, show me the error.
+
+**Then reload/restart opencode.** On reconnect it lists the 15 `flow_*` tools (including `flow_run`) and
+receives the server's built-in usage instructions — that's what lets you drive it in plain language.
+
+---
+
+## 2. Check it works: `flow-mcp doctor`
+
+A one-command health check. Run it after setting your keys, before your first run:
 
 ```bash
-node bin/flow-mcp.mjs doctor     # or `flow-mcp doctor` once installed
+node bin/flow-mcp.mjs doctor      # or `flow-mcp doctor` once installed
 ```
 
-It reports, and exits non-zero on any failing critical check:
+```
+flow-mcp doctor  (v0.34.0)
 
-- **node** — Node >= 22 is required.
-- **llm:haiku / llm:sonnet / llm:opus** — the provider each tier resolves to from your env. A
-  `!` is the offline `fake` provider (no real backend); a real provider with a missing API key
-  is a failure — set `FLOW_LLM_<TIER>_API_KEY` (or the blanket `FLOW_LLM_API_KEY`).
-- **git / playwright** — optional toolchains (`!` if absent); Playwright is only needed for web QA.
-- **tools** — confirms the 15 `flow_*` tools are wired into the binary.
+  ✓ node           node 22.x (require >= 22)
+  ✓ llm:haiku      provider=groq model=... (key set)
+  ✓ llm:sonnet     provider=groq model=... (key set)
+  ✓ llm:opus       provider=gemini model=... (key set)
+  ✓ git            git for @flow/git worktrees/PR
+  ! playwright     optional — web QA (Layer B) needs it
+  ✓ tools          15 flow_* tools wired
 
-`flow-mcp --version` and `flow-mcp --help` are also available.
+OK - ready to run.
+```
 
-## 3. Register the MCP server in your host
-The server speaks the Model Context Protocol over **stdio** (no HTTP URL yet — a host connects by *launching a
-command*, not by a URL). Run it **locally** (not in Docker) so the machine's toolchains (Android SDK / Gradle) are
-available to the executor and the QA verify.
+- **node** — Node ≥ 22 is required (`✗` if older).
+- **llm:haiku / sonnet / opus** — the provider each tier resolves to. `!` = the offline `fake` provider
+  (no real backend); a real provider with a **missing key is `✗`** — set `FLOW_LLM_<TIER>_API_KEY` (or the
+  blanket `FLOW_LLM_API_KEY`).
+- **git / playwright** — optional (`!` if absent); Playwright is only for web QA (Layer B).
+- **tools** — confirms the 15 `flow_*` tools are wired in.
 
-Use the launcher `scripts/flow-mcp.sh` — it loads your provider keys from `.env` (so they never go into the host's
-config) and execs the stdio server.
+Exit `0` = ready (warnings are fine); exit `1` = fix the `✗` first. `flow-mcp --version` and
+`flow-mcp --help` also work.
 
-**opencode — one command (no JSON to hand-edit):**
+---
+
+## 3. Use it — just talk to opencode
+
+Because the server ships its own usage instructions, you describe the job in plain language and opencode
+fills the tool parameters for you. For example:
+
+> Use **flow** to add a persistent dark-mode toggle to the settings screen of my app at
+> `/Users/me/apps/myapp`, on an **isolated branch**, and verify with Gradle
+> (`./gradlew :app:testDebugUnitTest`). **Show me the plan first.**
+
+opencode calls `flow_run` with: your absolute `targetDir`, `worktree: true` (isolation), your
+`verifyCommand`, `deriveCriteria: false`, and — because you said "show me the plan first" — it runs
+**without** `acceptPlan`, so flow returns the plan for you to review. When you approve, opencode re-runs
+with `acceptPlan: true` and it executes.
+
+**Why "verify with Gradle" and not just "make it work":** flow proves work with **evidence** (your test
+command's real result), never the model's say-so. Give it a real command and the run only goes green when
+that command passes.
+
+---
+
+## 4. Review the result
+
+With `worktree: true` (recommended), flow **never touches your app's working tree**. It:
+
+- creates a branch **`flow/<runId>`** in your app repo and works there (the worktree lives under
+  `FLOW_DIR/.flow/worktrees/<runId>`),
+- commits its changes on that branch,
+- returns **`branch`** and **`worktreeDir`** in the report.
+
+Review it like any branch and merge if you like it:
+
 ```bash
-./scripts/install-opencode-mcp.sh          # merges a "flow" entry into ~/.config/opencode/opencode.json
-# or a specific config:  OPENCODE_CONFIG=./opencode.json ./scripts/install-opencode-mcp.sh
+cd /Users/me/apps/myapp
+git log flow/<runId> -p        # see exactly what it changed
+git checkout flow/<runId>      # try it out
 ```
-It preserves everything else in your config and is safe to re-run. Then reload opencode and **just talk to it** —
-e.g. *"use flow to add a dark-mode toggle to my app at /path/to/app; acceptPlan, verify with ./gradlew testDebugUnitTest."*
-opencode calls the `flow_run` tool for you; you never paste JSON again.
 
-**opencode — manual (equivalent):** add to `opencode.json` (replace the absolute path with yours). `timeout` matters: a `flow_run` runs a
-whole autonomous loop (minutes), and opencode's MCP timeout defaults to 5000 ms — raise it:
+The QA **evidence** (each test's stdout/stderr/exit) lands under
+`FLOW_DIR/.flow/runs/<runId>/evidence/<taskId>/`.
+
+---
+
+## 5. Android specifics
+
+QA runs **commands as criteria**, so use Gradle:
+
+- `./gradlew :app:testDebugUnitTest` — unit tests (the main one)
+- `./gradlew lint` — static checks
+- `./gradlew assembleDebug` — a build check
+
+Pick a feature that a **Gradle unit test can prove** — logic, a `ViewModel`, a mapper, validation,
+formatting. Those get real evidence-backed verification.
+
+> **Limit — read this:** flow does **not** drive an emulator or device yet (Android UI QA / "Layer C" is
+> not built). So a purely **visual** UI change is not self-verified — only what your Gradle tests cover is.
+> Keep your first feature small and unit-testable.
+
+---
+
+## The `flow_run` parameters (reference)
+
+You normally don't type these — opencode fills them from your sentence. But if you drive another host, or
+want to be explicit, these are the fields:
+
+| Field | What it is |
+|---|---|
+| `runId` | A name for this run (required). |
+| `targetDir` | **Absolute** path of the repo to change (required). |
+| `objective` | One sentence: what to build (planner mode). |
+| `acceptPlan` | `true` to execute the planned tasks. Omit it to get the plan back first ("plan pending"), then re-run with `true`. |
+| `verifyCommand` | The command that proves the work, as an argv array, e.g. `["./gradlew",":app:testDebugUnitTest"]`. Run with no shell. |
+| `deriveCriteria` | `false` to rely on your `verifyCommand`. Default `true` auto-derives QA criteria from the plan — handy, but they can be **over-strict and block a correct result**, so prefer an explicit `verifyCommand`. |
+| `worktree` | `true` to isolate the run on a `flow/<runId>` branch (report returns `branch` + `worktreeDir`). Default `false` writes into the working tree. |
+| `tasks` | Explicit task list — skips the planner entirely (advanced). |
+| `maxSteps`, `contextRoot` | Optional bounds / repo-context root. |
+
+Explicit call, for reference:
+
+```json
+{ "runId": "add-dark-mode", "targetDir": "/Users/me/apps/myapp",
+  "objective": "Add a persistent dark-mode toggle to the settings screen",
+  "worktree": true, "acceptPlan": true, "deriveCriteria": false,
+  "verifyCommand": ["./gradlew", ":app:testDebugUnitTest"] }
+```
+
+---
+
+## Other hosts & advanced setup
+
+**opencode — manual JSON** (equivalent to the script). Add to `opencode.json`; raise the `timeout` — a
+run takes minutes and opencode's MCP default is 5000 ms:
+
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
@@ -65,51 +185,33 @@ whole autonomous loop (minutes), and opencode's MCP timeout defaults to 5000 ms 
   }
 }
 ```
-(Other stdio MCP hosts use the same idea: a `command` pointing at `scripts/flow-mcp.sh`.) After registering, the
-host lists 15 `flow_*` tools including `flow_run`.
 
-**Zero-clone via npx (from GitHub).** A host that just wants to *run* the server — no clone, no `npm run build` —
-can launch it straight from GitHub. `npm` clones the repo, builds it, and runs a single self-contained bundle
-(`bin/flow-mcp.mjs`, the whole `@flow` graph + the MCP SDK inlined):
+`scripts/flow-mcp.sh` loads your keys from `.env` and runs the live `dist/`. Any other stdio MCP host uses
+the same idea: a `command` pointing at that launcher.
+
+**Zero-clone via npx (from GitHub).** No clone, no build — npm fetches and builds a single self-contained
+bundle on first launch:
+
 ```json
 { "mcp": { "flow": { "type": "local",
   "command": ["npx", "-y", "github:l3vram/flow-harness", "flow-mcp"],
   "enabled": true, "timeout": 600000 } } }
 ```
-Trade-off: the npx bin does **not** source your `.env` (that is the launcher's job), so the host/shell must supply
-the `FLOW_LLM_*` provider vars itself. Use `scripts/flow-mcp.sh` when you want keys loaded from `.env`
-automatically; use npx when the host already injects the env and you want nothing checked out locally. The first
-launch builds (a few seconds, cached after); pin a release with `github:l3vram/flow-harness#v0.32.0`.
 
-**Claude Code (this repo).** `.mcp.json` at the repo root already registers `flow` (via `bash scripts/flow-mcp.sh`,
-which sources `.env` and runs the live `dist/` so it always reflects the newest working tree). Claude Code picks it
-up on the **next session / reload** and asks you to **approve** the server before its tools are usable — approve it
-once, then the `flow_*` tools are available in-session (this is how the harness dogfoods itself).
+Trade-off: the npx bin does **not** read your `.env`, so the host/shell must supply the `FLOW_LLM_*`
+provider vars itself. Pin a release with `github:l3vram/flow-harness#v0.34.0`. (Use `scripts/flow-mcp.sh`
+when you want keys loaded from `.env` automatically.)
 
-## 4. Drive a run
-Call the `flow_run` tool with your objective and the target repo:
-```json
-{ "runId": "add-dark-mode", "targetDir": "/path/to/your/app",
-  "objective": "Add a persistent dark-mode toggle to the settings screen",
-  "acceptPlan": true,
-  "verifyCommand": ["./gradlew", "testDebugUnitTest"] }
-```
-- `objective` (planner mode) needs `acceptPlan: true` to execute; without it, `flow_run` reports the plan is pending
-  so you can review it first. Or pass explicit `tasks` to skip the planner.
-- Acceptance criteria are auto-derived from the plan and verified by QA. You can also verify per-run with
-  `verifyCommand` (any argv, run with no shell).
-  > **Tip:** auto-derived criteria can be over-strict and block a *correct* result (e.g. an exact-content match).
-  > For reliable runs, prefer an explicit `verifyCommand` (Gradle for Android) or explicit `tasks` whose `verify`
-  > you control, rather than relying only on the derived criteria.
-- The report comes back with each task's status and its QA report (evidence lands under `<FLOW_HOME>/runs/<runId>/evidence/`).
+**Claude Code (inside this repo).** `.mcp.json` at the repo root already registers `flow` via
+`scripts/flow-mcp.sh`. Claude Code picks it up on the next session/reload and asks you to approve the
+server once — this is how the harness builds itself.
 
-## 5. Verifying an Android app
-QA runs **commands as criteria**, so use Gradle: `./gradlew testDebugUnitTest`, `./gradlew lint`,
-`./gradlew assembleDebug` for a build check. These give evidence-backed verification for **logic / unit-testable**
-features.
+---
 
 ## Current limits
-- **Android UI/device QA (Layer C) is not built yet** — flow does not drive an emulator/device, so *visual* UI is
-  not self-verified. Logic and anything covered by Gradle unit tests is.
-- `flow_run` is the lean library path: it does not create a git worktree or record lessons (the `flow-run` CLI does).
-- Transport is stdio only; an HTTP transport / remote daemon is future work.
+
+- **Android UI / device QA (Layer C) is not built yet** — no emulator/device is driven, so visual UI isn't
+  self-verified. Logic covered by Gradle unit tests is.
+- **Transport is stdio only** — a host launches the server as a local command (no HTTP URL / remote daemon
+  yet). Run it locally so your toolchains (Android SDK, Gradle, Node) are available to the build and QA.
+- `flow_run` is the lean library path (no lesson recording); the `flow-run` CLI records lessons.
