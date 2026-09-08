@@ -31,14 +31,24 @@ of each FILE block, not a diff.`;
 /**
  * Builds the two-message prompt sent to the model: a fixed system instruction plus a user
  * message carrying the task instruction and, when present, relevant repository context.
+ *
+ * `conventions` are project-wide hard constraints (e.g. "no Hilt", "tests are JUnit4, not
+ * kotlin.test", "never bump dependency versions"). When present they are appended to the system
+ * message as authoritative rules the model must obey on every task and every repair retry — the
+ * fix for the executor repeating patterns the plan forbids. SYSTEM_PROMPT stays first and
+ * byte-identical so the prompt-cache prefix is preserved.
  */
-export function buildExecutorMessages(task: ExecTask, context: string): Message[] {
+export function buildExecutorMessages(task: ExecTask, context: string, conventions = ""): Message[] {
+  const system =
+    conventions.trim() === ""
+      ? SYSTEM_PROMPT
+      : `${SYSTEM_PROMPT}\n\nPROJECT RULES — hard constraints for THIS repository. Obey them exactly; violating any one is a failure, even under repair pressure:\n${conventions.trim()}`;
   let userContent = `Task: ${task.instruction}`;
   if (context !== "") {
     userContent += `\n\nRelevant context:\n${context}`;
   }
   return [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: system },
     { role: "user", content: userContent },
   ];
 }

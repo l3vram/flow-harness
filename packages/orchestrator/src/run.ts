@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Runtime, type GateId } from "@flow/core";
 import { Ceo } from "@flow/ceo";
@@ -13,6 +14,20 @@ import type { RunConfig, RunReport, TaskSpec } from "./types.js";
 export interface RunFromConfigOptions {
   router?: ModelRouter;
   baseDir?: string;
+}
+
+/**
+ * Project conventions handed to the executor as hard constraints. Explicit `config.conventions` wins;
+ * otherwise the first of `AGENTS.md` / `CONVENTIONS.md` present at the repo root is used. Returns "" when
+ * none — so a repo opts in simply by having one of those files.
+ */
+export function resolveConventions(config: RunConfig): string {
+  if (config.conventions !== undefined) return config.conventions;
+  for (const name of ["AGENTS.md", "CONVENTIONS.md"]) {
+    const path = join(config.targetDir, name);
+    if (existsSync(path)) return readFileSync(path, "utf8");
+  }
+  return "";
 }
 
 /**
@@ -82,7 +97,10 @@ export async function runFromConfig(config: RunConfig, opts: RunFromConfigOption
   }
 
   const ceo = new Ceo(runtime, router);
-  const executor = new Executor(router, { verifyCommand: config.verifyCommand ?? [] });
+  const executor = new Executor(router, {
+    verifyCommand: config.verifyCommand ?? [],
+    conventions: resolveConventions(config),
+  });
   const orchestrator = new Orchestrator(runtime, ceo, executor, specs, {
     targetDir: effectiveTargetDir,
     maxSteps: config.maxSteps,

@@ -75,4 +75,10 @@ export interface RunConfig {
   worktree?: boolean;
   /** Derive QA acceptance criteria from the planner's spec.acceptance and attach them to the final task (default true). */
   deriveCriteria?: boolean;
+  /**
+   * Project-wide rules given to the executor as hard constraints on every task and repair retry
+   * (e.g. "no Hilt", "tests are JUnit4 not kotlin.test", "never bump dependency versions"). When
+   * omitted, runFromConfig auto-reads an AGENTS.md or CONVENTIONS.md from targetDir.
+   */
+  conventions?: string;
 }

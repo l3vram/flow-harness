@@ -394,6 +394,22 @@ the server tell the host how to call it so the user never hand-writes tool param
   with `deriveCriteria:false`, `worktree:true`) from a plain "use flow to add X to my app at <path>" —
   no copy-pasted JSON. Direct maintenance (localized edits + strings). **+3 tests (196 total).**
 
+### v0.35 — project conventions injected into the executor ✅
+Fixes the biggest real-world pain observed dogfooding on an external repo: the executor kept repeating
+patterns the plan forbade (Hilt, Mockito, kotlin.test, dependency bumps, rewriting delicate files),
+forcing the human CEO to rewrite most outputs — because those constraints never reached the executor's
+prompt. Now they do, on **every task and every repair retry**.
+- ✅ **`ExecutorOptions.conventions`** — prepended to the executor's system prompt as hard "PROJECT RULES"
+  (after the byte-stable base prompt, so the prompt-cache prefix is preserved). Applies to the initial
+  attempt and every repair (both go through the same executor).
+- ✅ **`RunConfig.conventions`** + **auto-source**: `runFromConfig` (and the `flow-run` CLI) use explicit
+  `conventions`, else auto-read an **`AGENTS.md` / `CONVENTIONS.md`** at the target repo root — a repo opts
+  in just by having one. An explicit empty string opts out.
+- ✅ **`flow_run` exposes `conventions`** and the server's host `instructions` document it, so an MCP host
+  (opencode) supplies project rules without the user hand-writing them.
+- ✅ **+8 tests (204 total).** Direct maintenance (the change touches the executor's own prompt — too
+  central to risk a dogfood paraphrase-bug; verified with tests).
+
 ---
 
 ## What remains

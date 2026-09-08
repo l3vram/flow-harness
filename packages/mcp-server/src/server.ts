@@ -19,6 +19,7 @@ export const SERVER_INSTRUCTIONS = [
   "- Review-first: call once WITHOUT `acceptPlan` to get the plan back as 'plan pending', then call again with `acceptPlan:true` to execute. (Or pass explicit `tasks` to skip the planner.)",
   "- Prefer an explicit `verifyCommand` over auto-derived criteria, which can be over-strict and block a correct result. For Android use Gradle, e.g. [\"./gradlew\",\":app:testDebugUnitTest\"], and set `deriveCriteria:false`.",
   "- Set `worktree:true` to run on an isolated `flow/<runId>` branch of the repo (recommended); the report returns `branch` and `worktreeDir` to review. Without it, flow writes into the working tree directly.",
+  "- To stop the executor repeating patterns your project forbids (banned frameworks, wrong test style, version bumps), pass `conventions` — hard rules applied to every task and every repair. Or drop an AGENTS.md / CONVENTIONS.md at the repo root and flow uses it automatically.",
   "- Evidence lands under <FLOW_HOME>/runs/<runId>/evidence/.",
   "Limit: Android UI/device QA is not built yet — only logic covered by Gradle unit tests is objectively verified.",
 ].join("\n");

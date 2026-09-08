@@ -13,6 +13,7 @@ import { isGitRepo, createWorktree, commitAll } from "@flow/git";
 import { deriveCriteria } from "@flow/verify";
 import { Orchestrator } from "./orchestrator.js";
 import { attachAcceptanceCriteria } from "./acceptance.js";
+import { resolveConventions } from "./run.js";
 import type { RunConfig, TaskSpec } from "./types.js";
 
 async function main(): Promise<void> {
@@ -133,7 +134,10 @@ async function main(): Promise<void> {
   }
 
   const ceo = new Ceo(runtime, router, { advisor });
-  const executor = new Executor(router, { verifyCommand: config.verifyCommand ?? [] });
+  const executor = new Executor(router, {
+    verifyCommand: config.verifyCommand ?? [],
+    conventions: resolveConventions(config),
+  });
   const orchestrator = new Orchestrator(runtime, ceo, executor, specs, {
     targetDir: effectiveTargetDir,
     maxSteps: config.maxSteps,

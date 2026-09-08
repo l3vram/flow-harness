@@ -19,7 +19,7 @@ export class Executor {
   ) {}
 
   async run(task: ExecTask, ctx: ExecContext): Promise<ExecResult> {
-    const messages = buildExecutorMessages(task, ctx.context ?? "");
+    const messages = buildExecutorMessages(task, ctx.context ?? "", this.opts.conventions ?? "");
 
     let res: { text: string };
     try {

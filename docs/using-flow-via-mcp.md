@@ -100,6 +100,25 @@ that command passes.
 
 ---
 
+## Teach flow your project's rules (so it stops repeating mistakes)
+
+The executor is a cheaper model; on a complex repo it will happily reach for a banned framework, the
+wrong test style, or bump a version — every task — unless you tell it not to. Put your project's hard
+rules where the executor sees them on **every task and every repair retry**: drop an **`AGENTS.md`** (or
+`CONVENTIONS.md`) at your repo root. flow reads it automatically and prepends it as non-negotiable rules.
+
+```markdown
+# AGENTS.md  (example for an Android app)
+- Dependency injection: NO Hilt/Dagger/Koin. Use plain constructors / manual factories.
+- Tests: JUnit4 (`org.junit.Test`, `org.junit.Assert.*`). NO Mockito, NO kotlin.test/runTest. Use fakes.
+- NEVER instantiate Firebase in JVM unit tests — test pure functions/mappers only.
+- NEVER bump AGP/Kotlin/Compose/compileSdk or the Firebase BoM.
+- Central files (e.g. MainActivity.kt): surgical edits only, never rewrite wholesale.
+```
+
+Prefer this over repeating the rules in every prompt. (You can also pass them per-run via the
+`conventions` parameter, which wins over the file; an explicit empty string opts out.)
+
 ## 4. Review the result
 
 With `worktree: true` (recommended), flow **never touches your app's working tree**. It:
@@ -153,6 +172,7 @@ want to be explicit, these are the fields:
 | `verifyCommand` | The command that proves the work, as an argv array, e.g. `["./gradlew",":app:testDebugUnitTest"]`. Run with no shell. |
 | `deriveCriteria` | `false` to rely on your `verifyCommand`. Default `true` auto-derives QA criteria from the plan — handy, but they can be **over-strict and block a correct result**, so prefer an explicit `verifyCommand`. |
 | `worktree` | `true` to isolate the run on a `flow/<runId>` branch (report returns `branch` + `worktreeDir`). Default `false` writes into the working tree. |
+| `conventions` | Project-wide hard rules for the executor on **every task and repair** (e.g. "no Hilt/Dagger", "tests are JUnit4 not kotlin.test", "no Mockito", "never bump dependency versions"). If omitted, an `AGENTS.md`/`CONVENTIONS.md` at the repo root is used. |
 | `tasks` | Explicit task list — skips the planner entirely (advanced). |
 | `maxSteps`, `contextRoot` | Optional bounds / repo-context root. |
 

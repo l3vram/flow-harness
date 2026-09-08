@@ -43,6 +43,13 @@ export interface ExecutorOptions {
   tier?: Tier;
   verifyCommand?: string[];
   maxFiles?: number;
+  /**
+   * Project-wide rules prepended to every prompt (including repair retries) as hard constraints —
+   * e.g. "no Hilt/Dagger", "tests are JUnit4, not kotlin.test", "never bump dependency versions".
+   * Cuts the executor repeating patterns the plan forbids. Sourced from RunConfig.conventions or an
+   * AGENTS.md/CONVENTIONS.md in the target repo.
+   */
+  conventions?: string;
 }
 
 /** Where to write files and what repository context (if any) to include in the prompt. */

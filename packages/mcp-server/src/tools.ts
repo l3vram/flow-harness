@@ -344,6 +344,11 @@ export const tools: ToolDef[] = [
           description:
             "Isolate the run on a flow/<runId> branch/worktree of targetDir (report returns branch+worktreeDir); default false writes into the working tree",
         },
+        conventions: {
+          type: "string",
+          description:
+            "Project-wide hard rules given to the executor on every task and repair retry (e.g. no Hilt/Dagger, tests are JUnit4 not kotlin.test, no Mockito, never bump dependency versions). If omitted, an AGENTS.md or CONVENTIONS.md at the repo root is used.",
+        },
       },
       required: ["runId", "targetDir"],
       additionalProperties: false,
@@ -360,6 +365,7 @@ export const tools: ToolDef[] = [
         acceptPlan: args.acceptPlan === true,
         deriveCriteria: args.deriveCriteria === false ? false : undefined,
         worktree: args.worktree === true,
+        conventions: optStr(args, "conventions"),
       };
       const router = ctx.router ?? routerFromEnv();
       return runFromConfig(config, { router, baseDir: ctx.baseDir });
