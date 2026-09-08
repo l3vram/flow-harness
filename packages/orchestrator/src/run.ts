@@ -5,6 +5,7 @@ import { Executor } from "@flow/executor";
 import { routerFromEnv, type ModelRouter } from "@flow/llm";
 import { Planner } from "@flow/planner";
 import { deriveCriteria } from "@flow/verify";
+import { isGitRepo, createWorktree, commitAll } from "@flow/git";
 import { Orchestrator } from "./orchestrator.js";
 import { attachAcceptanceCriteria } from "./acceptance.js";
 import type { RunConfig, RunReport, TaskSpec } from "./types.js";
@@ -16,10 +17,14 @@ export interface RunFromConfigOptions {
 
 /**
  * Runs the autonomous loop from a RunConfig and returns the report — a reusable library entry point used by
- * the MCP `flow_run` tool. Unlike the flow-run CLI's `main`, it does NOT do git worktrees or lesson recording,
- * and over a library/MCP boundary the plan gate is a thrown "plan pending" (set acceptPlan:true) rather than a
- * process exit. It uses `opts.router` when given (so the MCP tool passes its injected router and tests stay
- * offline), otherwise `routerFromEnv()`.
+ * the MCP `flow_run` tool. Over a library/MCP boundary the plan gate is a thrown "plan pending" (set
+ * acceptPlan:true) rather than a process exit. It uses `opts.router` when given (so the MCP tool passes its
+ * injected router and tests stay offline), otherwise `routerFromEnv()`.
+ *
+ * With `config.worktree === true` and a git targetDir, the run is isolated on a `flow/<runId>` branch/worktree
+ * (created under `<baseDir>/worktrees/<runId>`) instead of the target's working tree; the branch is committed
+ * for review and surfaced on the report as `branch`/`worktreeDir`. Off by default. (Lesson recording still
+ * lives only in the flow-run CLI.)
  */
 export async function runFromConfig(config: RunConfig, opts: RunFromConfigOptions = {}): Promise<RunReport> {
   const baseDir = opts.baseDir ?? process.env.FLOW_HOME ?? ".flow";
@@ -63,13 +68,34 @@ export async function runFromConfig(config: RunConfig, opts: RunFromConfigOption
     runtime.recordGate(gate as GateId, "approved");
   }
 
+  // Optionally isolate the run on a git worktree/branch of targetDir, so it never touches the target's
+  // working tree — the caller reviews the branch as a PR. Available over MCP (flow_run), unlike the CLI-only
+  // path before v0.34. Off by default (writes into targetDir directly).
+  let effectiveTargetDir = config.targetDir;
+  let worktreeDir: string | undefined;
+  let branch: string | undefined;
+  if (config.worktree === true && isGitRepo(config.targetDir)) {
+    branch = `flow/${config.runId}`;
+    worktreeDir = join(baseDir, "worktrees", config.runId);
+    createWorktree(config.targetDir, worktreeDir, branch);
+    effectiveTargetDir = worktreeDir;
+  }
+
   const ceo = new Ceo(runtime, router);
   const executor = new Executor(router, { verifyCommand: config.verifyCommand ?? [] });
   const orchestrator = new Orchestrator(runtime, ceo, executor, specs, {
-    targetDir: config.targetDir,
+    targetDir: effectiveTargetDir,
     maxSteps: config.maxSteps,
     contextRoot: config.contextRoot,
     evidenceDir: join(dir, "evidence"),
   });
-  return orchestrator.run();
+  const report = await orchestrator.run();
+
+  // If isolated, commit the changes on the run's branch for review (a PR gate) and surface the branch/worktree.
+  if (worktreeDir !== undefined && branch !== undefined) {
+    commitAll(worktreeDir, `flow-run: ${config.objective || config.runId}`);
+    report.branch = branch;
+    report.worktreeDir = worktreeDir;
+  }
+  return report;
 }

@@ -381,6 +381,19 @@ before use.
 - ✅ **Docs** — install path (`npx github:…` today, `npm i -g` once published) + a `doctor` reference in
   `README.md`, `README.es.md`, and the MCP runbook.
 
+### v0.34 — worktree isolation over MCP + host-facing usage instructions ✅ — *worktree self-built via flow-run; MCP surface direct*
+Makes `flow_run` safe and self-driving from an MCP host (opencode): isolate runs on a branch, and have
+the server tell the host how to call it so the user never hand-writes tool params.
+- ✅ **Worktree over MCP** — `runFromConfig` (the `flow_run` path) honors `worktree:true`: on a git
+  `targetDir` it runs on an isolated `flow/<runId>` branch/worktree, commits, and surfaces `branch`
+  /`worktreeDir` on the `RunReport` (off by default; worktree was CLI-only before). **Self-built by
+  `flow-run`** (task green, first attempt, eval **100/100**, clean — no drift). **+2 tests.**
+- ✅ **The server hands the host everything** — a server-level MCP `instructions` string (returned in
+  `initialize`) plus an enriched `flow_run` description and a new `worktree` field, so a host like
+  opencode fills the params (absolute `targetDir`, review-plan-first, explicit Gradle `verifyCommand`
+  with `deriveCriteria:false`, `worktree:true`) from a plain "use flow to add X to my app at <path>" —
+  no copy-pasted JSON. Direct maintenance (localized edits + strings). **+3 tests (196 total).**
+
 ---
 
 ## What remains

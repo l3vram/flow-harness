@@ -53,6 +53,9 @@ export interface RunReport {
   tasks: { id: string; status: Status }[]; // final status of every task
   /** Deterministic self-evaluation of the run (score + dimensions). */
   evaluation?: EvaluationReport;
+  /** When run with worktree:true on a git targetDir, the isolated branch and worktree path (for review). */
+  branch?: string;
+  worktreeDir?: string;
 }
 
 /** The on-disk config the CLI reads to start a run. */

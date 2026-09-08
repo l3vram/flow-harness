@@ -321,8 +321,12 @@ export const tools: ToolDef[] = [
     name: "flow_run",
     description:
       "Run the full autonomous loop from a config: resolve tasks (explicit `tasks`, or planned from an " +
-      "`objective`) then CEO -> executor -> QA on `targetDir`, returning the run report. For an objective, set " +
-      "acceptPlan:true to execute (otherwise it reports the plan is pending). Requires a real LLM backend via FLOW_LLM_*.",
+      "`objective`) then CEO -> executor -> QA on `targetDir` (an ABSOLUTE path), returning the run report. " +
+      "For an objective, set acceptPlan:true to execute (otherwise it reports the plan is pending — review it first). " +
+      "Prefer an explicit `verifyCommand` over auto-derived criteria (which can over-strictly block a correct " +
+      "result); for Android use Gradle (e.g. [\"./gradlew\",\":app:testDebugUnitTest\"]) with deriveCriteria:false. " +
+      "Set worktree:true to isolate the run on a flow/<runId> branch (the report then carries branch+worktreeDir). " +
+      "Requires a real LLM backend via FLOW_LLM_*.",
     inputSchema: {
       type: "object",
       properties: {
@@ -335,6 +339,11 @@ export const tools: ToolDef[] = [
         contextRoot: { type: "string" },
         acceptPlan: { type: "boolean", description: "Approve the planned tasks and execute" },
         deriveCriteria: { type: "boolean", description: "Derive QA criteria from acceptance (default true)" },
+        worktree: {
+          type: "boolean",
+          description:
+            "Isolate the run on a flow/<runId> branch/worktree of targetDir (report returns branch+worktreeDir); default false writes into the working tree",
+        },
       },
       required: ["runId", "targetDir"],
       additionalProperties: false,
@@ -350,6 +359,7 @@ export const tools: ToolDef[] = [
         maxSteps: typeof args.maxSteps === "number" ? args.maxSteps : undefined,
         acceptPlan: args.acceptPlan === true,
         deriveCriteria: args.deriveCriteria === false ? false : undefined,
+        worktree: args.worktree === true,
       };
       const router = ctx.router ?? routerFromEnv();
       return runFromConfig(config, { router, baseDir: ctx.baseDir });

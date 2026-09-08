@@ -1,4 +1,4 @@
-export { createServer, main } from "./server.js";
+export { createServer, main, SERVER_INSTRUCTIONS } from "./server.js";
 export { tools, getTool, type ToolContext, type ToolDef, type JsonSchema } from "./tools.js";
 export {
   runDoctor,
